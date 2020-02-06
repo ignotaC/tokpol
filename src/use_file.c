@@ -24,22 +24,24 @@ OF THIS SOFTWARE.
 
 #include <fcntl.h>
 
+#include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 
-FILE open_rfile( const char *const filename )  {
+FILE *open_rfile( const char *const filename )  {
 
   return fopen( filename, "r" );
 
 }
 
 
-int open_wfile( const char *const filename )  {
+FILE *open_wfile( const char *const filename )  {
 
   return fopen( filename, "w" );
 
 }
 
-static void rmv_newline( const char *const buff,
+static void rmv_newline( char *const buff,
 		         const size_t buff_size )  {
 
   for( size_t i = 0; i < buff_size; i++ )  {
@@ -58,7 +60,7 @@ static void rmv_newline( const char *const buff,
 
 // if EOF -1 but errno set to 0
 int read_line( FILE *const rfile,
-	       const char *const buff,
+	       char *const buff,
 	       const size_t buff_size )  {
 
   if( fgets( buff, buff_size, rfile ) == NULL )  {
@@ -93,7 +95,7 @@ void fmemfile( char **memfile )  {
 }
 
 char **file_to_mem( const char *const fname,
-	            const char *const buff,
+	            char *const buff,
 	            const size_t buff_size )  {
 
   FILE *usefile = open_rfile( fname );
@@ -117,7 +119,7 @@ char **file_to_mem( const char *const fname,
 
     size_t linesize = strlen( buff ) + 1;
     char *lineptr = malloc( linesize );
-    if( ptr == NULL ) break;
+    if( lineptr == NULL ) break;
     memcpy( lineptr, buff, linesize ); 
 
     // save on old NULL

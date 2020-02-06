@@ -26,6 +26,7 @@ OF THIS SOFTWARE.
 
 #include "const.h"
 #include "base_func.h"
+#include "use_file.h"
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -55,16 +56,18 @@ struct msg_buff mb[ MB_SIZE ];
 struct msg_buff *mb_cur = &mb[0];
 /// MUTEX END
 
- //set signals working 
 int main( int argc, char **argv, char **envp  )  {
 
-  ( void )argc;
-  ( void )argv;
-
+  if( argc != 2 )  fail( "Missing server config file" );
+  char **server_conf = file_to_mem( argv[1] );
+  if( server_conf == NULL )  fail( "Couold not load server_conf file" );
+  struct server_data sd;
+  if( load_sd( server_conf, &sd ) == -1 )  fail( "Failed on loading server data" );
+  fmemfile( server_conf );
 
   program_path = getenv( "HOME" );
   if( program_path == NULL )  fail( "getenv fail" );
-  if( chdir( program_path ) )  fail( "chdir fail" ); 
+  if( chdir( program_path ) )  fail( "chdir fail" );
   puts( program_path );
 
   int estat = pthread_mutex_init( &main_mutex, NULL );

@@ -26,17 +26,18 @@ OF THIS SOFTWARE.
 #define FPERM ( S_IRUSR S_IWUSR )
 
 #include <stddef.h>
+#include <stdio.h>
 
 FILE *open_rfile( const char *const filename );
 FILE *open_wfile( const char *const filename );
-static void rmv_newline( const char *const buff,
+static void rmv_newline( char *const buff,
 		         const size_t buff_size );
 int read_line( FILE *const rfile,
-	       const char *const buff,
+	       char *const buff,
 	       const size_t buff_size );
 void fmemfile( char **memfile );
 char **file_to_mem( const char *const fname,
-	            const char *const buff,
+	            char *const buff,
 	            const size_t buff_size );
  
 #endif
