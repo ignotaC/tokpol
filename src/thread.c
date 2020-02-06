@@ -28,8 +28,8 @@ OF THIS SOFTWARE.
 
 #include "serv_globals.h"
 
-#include "client/const.h"
-#include "client/base_func.h"
+#include "const.h"
+#include "base_func.h"
 
 #include <sys/socket.h>
 

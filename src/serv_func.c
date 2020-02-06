@@ -24,7 +24,7 @@ OF THIS SOFTWARE.
 
 #include "serv_func.h"
 
-#include "client/const.h"
+#include "const.h"
 
 #include <netinet/in.h>
 
