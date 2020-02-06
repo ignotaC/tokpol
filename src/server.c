@@ -1,0 +1,159 @@
+/*
+
+Copyright (c) 2020 Piotr Trzpil  p.trzpil@protonmail.com
+
+Permission to use, copy, modify, and distribute 
+this software for any purpose with or without fee
+is hereby granted, provided that the above copyright
+notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR
+DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE
+FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
+CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
+OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
+OF THIS SOFTWARE.
+
+*/
+
+
+
+#include "serv_func.h"
+#include "serv_globals.h"
+#include "thread.h"
+
+#include "client/const.h"
+#include "client/base_func.h"
+
+#include <sys/socket.h>
+#include <sys/types.h>
+
+#include <arpa/inet.h>
+#include <netinet/in.h>
+
+#include <fcntl.h>
+#include <errno.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <unistd.h>
+#include <string.h>
+
+// Made for God glory.
+const char *program_path = NULL;
+const char saved_msg[] = ".saved_chat";
+
+
+/// MUTEX
+pthread_mutex_t main_mutex;
+struct msg_buff mb[ MB_SIZE ];
+struct msg_buff *mb_cur = &mb[0];
+/// MUTEX END
+
+ //set signals working 
+int main( int argc, char **argv, char **envp  )  {
+
+  ( void )argc;
+  ( void )argv;
+
+
+  program_path = getenv( "HOME" );
+  if( program_path == NULL )  fail( "getenv fail" );
+  if( chdir( program_path ) )  fail( "chdir fail" ); 
+  puts( program_path );
+
+  int estat = pthread_mutex_init( &main_mutex, NULL );
+  if( estat )  fail( strerror( estat ) );
+  puts( "Mutex ready." );
+
+  init_msg_buff();
+  puts( "Message buff set up." );
+  if( load_saved_msg() < 0 )  fail( "Chat loading fail" );
+  puts( "Loading saved chat done" );
+
+  struct sigaction sa;
+  memset( &sa, 0, sizeof( sa ) );
+  sa.sa_handler = SIG_IGN;
+  sa.sa_flags = 0;
+  if( sigemptyset( &sa.sa_mask ) == -1 )
+    fail( "Could not set empty mask" );
+  if( sigaction( SIGPIPE, &sa, NULL ) == -1 )
+    fail( "Could not ignore sigpipe." );
+
+  int listenfd = mklistenfd();
+  if( listenfd < 0 )  fail( "Creating listen socket" );
+  puts( "Listen socket created and ready to accept connections." );
+
+  int enable = 1;
+  if( setsockopt( listenfd, SOL_SOCKET, SO_REUSEADDR,
+		  &enable, ( socklen_t )sizeof( enable ) ) < 0 )
+    fail( "Could not set reuse addr socket option." );
+  
+  puts( "Turning to daemon." ); 
+  // if( turn_daemon() < 0 )  fail( "Could not turn to daemon" );
+  // turned off for debug for now
+
+
+
+  struct thread_data *td;
+  struct sockaddr_in cliaddr;
+  socklen_t clilen = sizeof( cliaddr );
+  pthread_t pt;
+  int sockfd;
+  for( int save_tic = 0;; save_tic++)  {
+
+    // One thead per 1 sec on comnection is enought.
+    // This is not busy server.
+    // Protects from jokers to some point.
+    sleep( 1 ); 
+    puts( "waiting for connection" );
+    if( ( sockfd = accept( listenfd,
+			   ( struct sockaddr* ) &cliaddr,
+			   &clilen ) ) < 0 )  {
+
+      switch( errno )  {
+
+      case EINTR:
+      case ECONNABORTED:
+	continue;
+      default:
+	restart( envp );
+	
+      }
+      
+    }
+
+    puts( "something came" );
+
+    if( set_cloexec( sockfd ) < 0 )
+      restart( envp );
+
+    int hash = 0;
+    memcpy( &hash, &( cliaddr.sin_addr ),
+	    sizeof( hash ) < sizeof( cliaddr.sin_addr ) ?
+	    sizeof( hash ) : sizeof( cliaddr.sin_addr ) );
+
+    hash ^= 734473;
+    hash ^= 17237766;
+
+    
+    if( ( td = malloc( sizeof( td ) ) ) == NULL )
+      restart( envp );
+    td->hash = hash;
+    td->sockfd = sockfd;
+
+    estat = pthread_create( &pt, NULL, client, td );
+    if( estat == EINVAL )  restart( envp );
+    
+  }
+  
+}
+
+
