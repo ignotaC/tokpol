@@ -1,0 +1,187 @@
+#!/usr/local/bin/wish8.6
+
+#/*
+#
+#Copyright (c) 2020 Piotr Trzpil  p.trzpil@protonmail.com
+#
+#Permission to use, copy, modify, and distribute 
+#this software for any purpose with or without fee
+#is hereby granted, provided that the above copyright
+#notice and this permission notice appear in all copies.
+#
+#THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR
+#DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+#INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+#AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE
+#FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+#DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+#OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
+#CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
+#OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
+#OF THIS SOFTWARE.
+#
+#*/
+
+
+
+#####################
+#
+#  STARTUP WINDOW
+#
+######################
+
+wm minsize . 600 400
+wm title . "TokPol"
+
+
+set def_initf_name "tokpol.init"
+variable  cli_sock
+variable prog_flag 0
+
+set ip_str ""
+set port_str ""
+set login_str ""
+set password_str ""
+
+if { ! [ catch { set initf [ open $def_initf_name r ] } ] } {
+
+  while { true }  {
+
+   if { [ gets $initf ip_str ] < 0 }  break
+   if { [ gets $initf port_str ] < 0 }  break
+   if { [ gets $initf login_str ] < 0 }  break
+   break
+
+ }  
+
+ close $initf
+
+} 
+
+#exit button
+button .exitbut -text "X" \
+       -background red \
+       -command exit_program
+pack   .exitbut -anchor n \
+       -side right
+
+# server data
+label .iplab -text "Server IP: "
+entry .ipent -width 20 \
+      -textvariable ::ip_str
+label .portlab -text "Server Port: "
+entry .portent -width 10 \
+      -textvariable ::port_str
+pack .iplab .ipent \
+     .portlab .portent \
+     -side top
+
+# user data
+label .loginlab -text "Login: "
+entry .loginent -width 30 \
+      -textvariable ::login_str
+label .passlab -text "Password: "
+entry .passent -width 30 -show  "?" \
+      -textvariable ::password_str
+pack .loginlab .loginent \
+     .passlab .passent \
+     -side top
+
+#connect button
+button .connectbut -text "Connect" \
+       -background yellow \
+       -command connect_serv
+pack .connectbut  -side top
+
+label .connectlab -foreground red \
+      -font bold
+pack .connectlab -side top
+
+
+#######################
+#
+# Start functions
+#
+#######################
+
+proc exit_program { } { 
+
+  exit
+
+}
+
+proc connect_serv { }  {
+
+  if { [ info exists ::cli_sock ] }  {
+
+    close $::cli_sock;
+    unset ::cli_sock;
+
+  }
+
+  .connectbut configure -state disabled
+  .connectlab configure -text ""
+  update
+  
+  file delete $::def_initf_name
+  set initf [ open $::def_initf_name w ]
+  puts $initf $::ip_str
+  puts $initf $::port_str
+  puts $initf $::login_str
+  close $initf
+
+
+  if { [ catch { set ::cli_sock \
+    [ socket -async $::ip_str $::port_str ] } estr ] } {
+
+    .connectlab configure -text $estr
+    .connectbut configure -state normal
+    return
+
+  }
+    
+  while { true }  {
+     
+    after 100 
+    .connectbut configure -text "."
+    update
+    after 100 
+    .connectbut configure -text ".."
+    update
+    after 100 
+    .connectbut configure -text "..."
+    update
+    after 100 
+    .connectbut configure -text ".."
+    update
+    after 100 
+    .connectbut configure -text "."
+    update
+
+    if { ![ chan configure $::cli_sock \
+             -connecting ] } {
+  
+      if { [ catch { chan configure \
+              $::cli_sock -error } errstr ] }  {
+
+        .connectlab configure -text $errstr
+        .connectbut configure -state normal
+
+      }
+   
+      chan configure $::cli_sock -blocking 0
+      break
+      
+    }
+    
+  } 
+
+  #  .connectlab configure -text $errstr
+ 
+  .connectbut configure -text "Connected"
+  .connectbut configure -background "light green"
+
+}
+
+
+

@@ -45,10 +45,10 @@ OF THIS SOFTWARE.
 #include <unistd.h>
 #include <string.h>
 
+#define BUFF_SIZE 8192
+
 // Made for God glory.
 const char *program_path = NULL;
-const char saved_msg[] = ".saved_chat";
-
 
 /// MUTEX
 pthread_mutex_t main_mutex;
@@ -58,8 +58,10 @@ struct msg_buff *mb_cur = &mb[0];
 
 int main( int argc, char **argv, char **envp  )  {
 
+  char buff[ BUFF_SIZE ];
+
   if( argc != 2 )  fail( "Missing server config file" );
-  char **server_conf = file_to_mem( argv[1] );
+  char **server_conf = file_to_mem( argv[1], buff, BUFF_SIZE );
   if( server_conf == NULL )  fail( "Couold not load server_conf file" );
   struct server_data sd;
   if( load_sd( server_conf, &sd ) == -1 )  fail( "Failed on loading server data" );

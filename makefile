@@ -5,7 +5,6 @@ BIN = bin
 CDSRC = cd ${SRC} &&
 
 SER=tokpol_serv
-CLI=tokpol_cli
 
 SERVSRC = server.c\
 	  base_func.c\
