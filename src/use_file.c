@@ -24,6 +24,7 @@ OF THIS SOFTWARE.
 
 #include <fcntl.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
@@ -55,6 +56,23 @@ static void rmv_newline( char *const buff,
     }
 
   }
+
+  buff[ buff_size - 1 ] = '\0';
+
+}
+
+// return 1 if line is just spaces tabs etc.
+static int empty_line( char *const buff,
+		       const size_t buff_size )  {
+
+  for( size_t i = 0; i < buff_size; i++ )  {
+
+    if( buff[i] == '\0' )  break;
+    if( ! isspace( buff[i] ) )  return 0;
+
+  }
+
+  return 1;
 
 }
 
@@ -112,12 +130,15 @@ char **file_to_mem( const char *const fname,
   size_t ptr_len = 1;
   while( read_line( usefile, buff, buff_size ) 
 	 != -1 )  {
-	  
-    char **temp = realloc( memfile, ptr_len + 1 );
+    
+    if( empty_line( buff, buff_size ) )  continue;
+
+    void *temp = realloc( memfile,
+	  ( ptr_len + 1 ) * sizeof *memfile );
     if( temp == NULL )  break;
     memfile = temp;
 
-    size_t linesize = strlen( buff ) + 1;
+    size_t linesize = strnlen( buff, buff_size ) + 1;
     char *lineptr = malloc( linesize );
     if( lineptr == NULL ) break;
     memcpy( lineptr, buff, linesize ); 
@@ -142,7 +163,19 @@ char **file_to_mem( const char *const fname,
 
 }
 
+void memfile_free( char **memfile )  {
 
+  for( char **mempos = memfile;
+       *mempos != NULL;
+       mempos++ )  {
+
+    free( *mempos );
+
+  }
+
+  free( memfile );
+
+}
 
 
 

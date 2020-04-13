@@ -28,7 +28,7 @@ OF THIS SOFTWARE.
 #include <pthread.h>
 
 extern const char *program_path;
-extern const char saved_msg[];
+extern char *saved_msg;
 extern struct msg_buff *mb_cur;
 
 

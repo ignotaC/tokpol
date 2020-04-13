@@ -151,8 +151,8 @@ int parse_ptr( int *const cli_stat_ptr,
 	       char *const buff,
 	       const size_t buff_size )  {
 
-  uint32_t protocol = 0;
-  if( buff_size != sizeof( protocol ) )  {
+  uint8_t protocol = 0;
+  if( buff_size < sizeof( protocol ) )  {
 
     errno = 0;
     perror( "No protocol number at all" );
@@ -162,8 +162,11 @@ int parse_ptr( int *const cli_stat_ptr,
 
   memcpy( &protocol, buff, sizeof( protocol ) );
 
-  if( protocol == PRT_BYE )  {
+  printf( "protocol %d\n", ( int ) protocol );
 
+  if( protocol == PRT_BYE )  {
+    
+    puts( "Client saying bye bye" );
     *cli_stat_ptr = CLI_BYE;
     return 0;
 
@@ -179,6 +182,7 @@ int parse_ptr( int *const cli_stat_ptr,
 	return -1;
 
       }
+      puts( "HELO came from new" );
       *cli_stat_ptr = CLI_HEL;
       return 0;
 
@@ -186,13 +190,7 @@ int parse_ptr( int *const cli_stat_ptr,
       switch( protocol )  {
 
         case PRT_LOGIN:
-          *cli_stat_ptr = CLI_PAS;
-	  return 0;
-        case PRT_GUEST:
-          *cli_stat_ptr = CLI_RED;
-	  return 0;
-	case PRT_BAGNO:
-	  *cli_stat_ptr = CLI_BGN;
+          *cli_stat_ptr = CLI_CHK;
 	  return 0;
 	default:
 	  errno = 0;
@@ -204,10 +202,7 @@ int parse_ptr( int *const cli_stat_ptr,
     case CLI_LOG: 
       switch( protocol )  {
 
-        case PRT_HISTR:
-          *cli_stat_ptr = CLI_HST;
-	  return 0;
-        case PRT_WRITE:
+        case PRT_MSG:
           *cli_stat_ptr = CLI_MSG;
 	  return 0;
         default:
@@ -226,16 +221,21 @@ int parse_ptr( int *const cli_stat_ptr,
 
 }
 
-int mklistenfd( void )  {
+int mklistenfd( int port )  {
 
   struct sockaddr_in sin;
   memset( &sin, 0, sizeof( sin ) );
-  sin.sin_port = htons( ( unsigned short ) USED_PORT );
+  sin.sin_port = htons( ( unsigned short ) port );
   sin.sin_family = AF_INET;
   sin.sin_addr.s_addr = INADDR_ANY;
 
   int listenfd = socket( AF_INET, SOCK_STREAM, 0 );
   if( listenfd < 0 )  return -1;
+
+  int enable = 1;
+  if( setsockopt( listenfd, SOL_SOCKET, SO_REUSEADDR,
+      &enable, ( socklen_t )sizeof( enable ) ) < 0 )
+    return -1;
 
   if( bind( listenfd, ( struct sockaddr* ) &sin, sizeof( sin ) ) < 0 )
     return -1;
@@ -282,4 +282,129 @@ int turn_daemon( void )  {
   
 }
 
+int load_sd( char *const*const servconf,
+             struct server_data *sd )  {
 
+  const size_t temp_buff_size = 8192;
+  char temp_buff[ temp_buff_size ];
+  void *tmp_mem;
+
+  // init sd
+  sd->logpass = NULL;
+  sd->history_file = NULL;
+  sd->port = DEFAULT_PORT;
+  sd->logpass_size = 0;
+  
+  char *const* namepos = ( char *const* ) servconf;
+  int status = -1;
+  for( ;*namepos != NULL; namepos++ )  {
+ 
+    if( status == -1 )  {
+
+      if( sscanf( *namepos, "%s", temp_buff ) != 1 )
+        continue;
+
+      if( ! strcmp( temp_buff, USER_HINT ) )  {
+
+        status = ULOG_DATA;
+	continue;
+
+      }
+
+      if( ! strcmp( temp_buff, HIST_HINT ) )  {
+
+        status = HIST_DATA;
+	continue;
+
+      }
+
+
+      if( ! strcmp( temp_buff, PORT_HINT ) )  {
+
+        status = PORT_DATA;
+	continue;
+
+      }
+
+      fprintf( stderr,
+               "Wrong server variable, ignoring:\n" );
+      fprintf( stderr, "%s\n", temp_buff );
+
+    }
+    
+    if( sscanf( *namepos, "%s", \
+        temp_buff ) != 1 )  {
+
+      perror( *namepos );
+      return -1;
+
+    }
+
+
+    switch( status )  {
+
+      case PORT_DATA:
+       errno = 0;
+       sd->port = ( unsigned short )strtol( \
+          temp_buff, NULL, 10 );
+       if( errno != 0 )  return -1;
+       status = -1;
+       break;
+
+      case HIST_DATA:
+        ;
+	size_t hist_name_size = \
+	  strnlen( temp_buff, temp_buff_size );
+        tmp_mem = malloc( hist_name_size + 1 );
+	if( tmp_mem == NULL )  return -1;
+	strncpy( tmp_mem, temp_buff, hist_name_size );
+	( ( char* )tmp_mem )[ hist_name_size ] = '\0';
+	sd->history_file = tmp_mem;
+	status = -1;
+	break;
+
+       case ULOG_DATA:
+        sd->logpass_size++;
+	tmp_mem = realloc( sd->logpass, \
+	  sd->logpass_size * sizeof *( sd->logpass ) );
+	if( tmp_mem == NULL )  return -1;
+	sd->logpass = tmp_mem;
+	( sd->logpass )[ sd->logpass_size- 1 ][0] = \
+	  NULL;
+	( sd->logpass )[ sd->logpass_size - 1 ][1] = \
+	  NULL;
+
+	size_t user_name_size = \
+	  strnlen( temp_buff, temp_buff_size );
+	tmp_mem = malloc( user_name_size + 1 );
+	if( tmp_mem == NULL )  return -1;
+	strncpy( tmp_mem, temp_buff, user_name_size );
+	( ( char* )tmp_mem )[ user_name_size ] = '\0';
+	sd->logpass[ sd->logpass_size - 1 ][0] = \
+	   tmp_mem;
+	status = UPAS_DATA;
+	break;
+
+       case UPAS_DATA:
+	;  // must be expression
+	size_t pass_name_size = \
+	  strnlen( temp_buff, temp_buff_size );
+	tmp_mem = malloc( pass_name_size + 1 );
+	if( tmp_mem == NULL )  return -1;
+	strncpy( tmp_mem, temp_buff, pass_name_size );
+	( ( char* )tmp_mem )[ pass_name_size ] = '\0';
+	sd->logpass[ sd->logpass_size - 1 ][1] = \
+	  tmp_mem;
+	status = -1;
+	break;
+
+       default:
+	return -1;
+
+    }
+
+  }
+
+  return 0;
+
+}

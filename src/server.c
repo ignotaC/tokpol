@@ -54,6 +54,8 @@ const char *program_path = NULL;
 pthread_mutex_t main_mutex;
 struct msg_buff mb[ MB_SIZE ];
 struct msg_buff *mb_cur = &mb[0];
+struct server_data sd;
+char *saved_msg = NULL;
 /// MUTEX END
 
 int main( int argc, char **argv, char **envp  )  {
@@ -63,14 +65,20 @@ int main( int argc, char **argv, char **envp  )  {
   if( argc != 2 )  fail( "Missing server config file" );
   char **server_conf = file_to_mem( argv[1], buff, BUFF_SIZE );
   if( server_conf == NULL )  fail( "Couold not load server_conf file" );
+  puts( "Configuration file loaded" );
   struct server_data sd;
-  if( load_sd( server_conf, &sd ) == -1 )  fail( "Failed on loading server data" );
-  fmemfile( server_conf );
+  if( load_sd( server_conf, &sd ) == -1 )
+    fail( "Failed on loading server data" );
+  puts( "Server variables loaded" );
+  // get rid of loaded to memory file.
+  memfile_free( server_conf );
+  saved_msg = sd.history_file;
 
   program_path = getenv( "HOME" );
   if( program_path == NULL )  fail( "getenv fail" );
   if( chdir( program_path ) )  fail( "chdir fail" );
-  puts( program_path );
+  printf( "Program started from path:%s\n",
+	  program_path );
 
   int estat = pthread_mutex_init( &main_mutex, NULL );
   if( estat )  fail( strerror( estat ) );
@@ -89,16 +97,15 @@ int main( int argc, char **argv, char **envp  )  {
     fail( "Could not set empty mask" );
   if( sigaction( SIGPIPE, &sa, NULL ) == -1 )
     fail( "Could not ignore sigpipe." );
+  puts( "Signal handlers set" );
 
-  int listenfd = mklistenfd();
+  printf( "%d\n", sd.port );
+
+  int listenfd = mklistenfd( sd.port );
   if( listenfd < 0 )  fail( "Creating listen socket" );
   puts( "Listen socket created and ready to accept connections." );
 
-  int enable = 1;
-  if( setsockopt( listenfd, SOL_SOCKET, SO_REUSEADDR,
-		  &enable, ( socklen_t )sizeof( enable ) ) < 0 )
-    fail( "Could not set reuse addr socket option." );
-  
+ 
   puts( "Turning to daemon." ); 
   // if( turn_daemon() < 0 )  fail( "Could not turn to daemon" );
   // turned off for debug for now

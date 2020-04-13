@@ -27,8 +27,8 @@ OF THIS SOFTWARE.
 
 #include <stddef.h>
 
-#define MSG_SIZE 2048
-#define MB_SIZE 128
+#define MSG_SIZE 8192
+#define MB_SIZE 1024
 
 struct msg_buff {
 
@@ -41,12 +41,9 @@ enum {
 
   CLI_NEW,
   CLI_HEL,
-  CLI_PAS,
+  CLI_CHK,
   CLI_LOG,
-  CLI_HST,
-  CLI_RED,
   CLI_MSG,
-  CLI_BGN,
   CLI_BYE
 
 };

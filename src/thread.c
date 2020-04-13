@@ -125,14 +125,12 @@ void* client( void* td )  {
       switch( errno )  {
 
         case 0:
-	 puts( "case end" );
 	 rst_type = write( sockfd, buff, 1 );
-	 puts( "one" );
 	 rst_type = write( sockfd, buff, 1 );
-	 puts( "two" );
-	 if( rst_type == 0 )  puts( "fin" );
-	 if( rst_type < 0 )  puts( "rst" );
-         perror( "ending" );
+	 if( rst_type == 0 )  
+	   perror( "Client sent fin" );
+	 if( rst_type < 0 ) 
+           perror( "RST on connection" );
 	 close( sockfd );
          pthread_exit( NULL );
 	case VALUES_ERROR:
@@ -160,24 +158,17 @@ void* client( void* td )  {
     switch( cli_stat )  {
 
       case CLI_HEL:
-        //send_proto( PRT_HELLO );
+        send_proto( PRT_HELLO );
 	break;
-      case CLI_PAS:
+      case CLI_LOG:
 	//check_pass();
 	//send_proto( PRT_OK );
-	cli_stat = CLI_LOG;
-      case CLI_RED:
-	//send_convo();
-	break;
-      case CLI_HST:
-        //send_history();
 	break;
       case CLI_MSG:
 	//save_msg();
 	break;
-      case CLI_BGN:
-        //do_bagno();
       case CLI_BYE:
+	puts( "Leaving" );
         shutdown( sockfd,  SHUT_RDWR );
 	goto thread_end;
       default:

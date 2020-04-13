@@ -30,8 +30,7 @@ OF THIS SOFTWARE.
 
 FILE *open_rfile( const char *const filename );
 FILE *open_wfile( const char *const filename );
-static void rmv_newline( char *const buff,
-		         const size_t buff_size );
+
 int read_line( FILE *const rfile,
 	       char *const buff,
 	       const size_t buff_size );
@@ -39,5 +38,6 @@ void fmemfile( char **memfile );
 char **file_to_mem( const char *const fname,
 	            char *const buff,
 	            const size_t buff_size );
+void memfile_free( char **memfile );
  
 #endif

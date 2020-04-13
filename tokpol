@@ -33,10 +33,19 @@
 wm minsize . 600 400
 wm title . "TokPol"
 
+namespace eval proto {
+
+  variable helo  [binary format B8 00000000 ]
+  variable login [binary format B8 00000001 ]
+  variable msg   [binary format B8 00000010 ]
+  variable ok    [binary format B8 00000011 ]
+  variable bye   [binary format B8 00000100 ]
+
+}
 
 set def_initf_name "tokpol.init"
 variable  cli_sock
-variable prog_flag 0
+variable serv_str
 
 set ip_str ""
 set port_str ""
@@ -106,6 +115,9 @@ pack .connectlab -side top
 
 proc exit_program { } { 
 
+  puts -nonewline $::cli_sock $proto::bye
+  close $::cli_sock;
+
   exit
 
 }
@@ -139,9 +151,12 @@ proc connect_serv { }  {
     return
 
   }
-    
+  
+  set count 0
   while { true }  {
-     
+    
+    set count [ expr $count + 1 ]
+
     after 100 
     .connectbut configure -text "."
     update
@@ -166,21 +181,38 @@ proc connect_serv { }  {
 
         .connectlab configure -text $errstr
         .connectbut configure -state normal
+        .connectbut configure -text "Connect"
+        return
 
       }
    
-      chan configure $::cli_sock -blocking 0
+      #chan configure $::cli_sock -blocking 0
       break
       
     }
+
+    if { $count > 30 }  {
+
+      .connectlab  configure -text \
+        "Connection timed out"
+      .connectbut configure -state normal
+      .connectbut configure -text "Connect"
+      return
+
+    } 
     
   } 
 
   #  .connectlab configure -text $errstr
  
-  .connectbut configure -text "Connected"
-  .connectbut configure -background "light green"
-
+  .connectbut configure -text "Connected" \
+              -disabledforeground  "black" \
+              -background "light green"
+  update
+  fconfigure $::cli_sock -buffering none
+  puts -nonewline $::cli_sock $proto::helo
+  set ans [ read $::cli_sock 1 ]
+  
 }
 
 

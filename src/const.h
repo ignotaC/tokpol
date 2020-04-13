@@ -38,10 +38,7 @@ enum {
 
   PRT_HELLO,
   PRT_LOGIN,
-  PRT_HISTR,
-  PRT_GUEST,
-  PRT_WRITE,
-  PRT_BAGNO,
+  PRT_MSG,
   PRT_OK,
   PRT_BYE
 

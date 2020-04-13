@@ -103,10 +103,11 @@ int read_msgpart( const int sockfd,
 	          char *const buff,
 	          const size_t buff_size )  {
 
+
   int counter = 0;
   ssize_t readret = 1, read_sum = 0;
   while( ( size_t )read_sum < buff_size )  {
-	 
+	
     if( ( readret = readfd( sockfd, buff, buff_size,
 			    &read_sum ) ) == -1 )  {
 
@@ -174,16 +175,18 @@ int read_proto( const int sockfd,
 	        char *const buff,
 	        const size_t buff_size )  {
  
-  uint32_t protocol;
+  uint8_t protocol;
   if( buff_size < sizeof( protocol ) )  {
 
     errno = VALUES_ERROR;
     return -1;
 
   }
+
   if( read_msgpart( sockfd, ( char* )&protocol, sizeof( protocol ) ) == -1 )
     return -1;
 
+  
   memcpy( buff, &protocol, sizeof( protocol ) ); 
   return 0;
 
@@ -217,7 +220,7 @@ int mkmsg( const int protocol,
 	   char *const msg,
 	   const size_t msg_size )  {
 
-  uint32_t keep_proto = protocol;
+  uint8_t keep_proto = protocol;
   if( msg_size < sizeof( keep_proto ) + inmsg_size )  {
 
 	  errno = 0;
