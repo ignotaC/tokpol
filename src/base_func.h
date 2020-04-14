@@ -54,6 +54,13 @@ int read_proto( const int sockfd,
 	        char *const buff,
 	        const size_t buff_size );
 
+int write_msgpart( const int sockfd,
+		   char *buff,
+		   const size_t buff_size );
+		   
+int write_proto( const int sockfd,
+		 const int protocol );
+
 int mkmsg( const int protocol,
 	   char *const inmsg,
 	   const size_t inmsg_size,

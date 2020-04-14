@@ -12,12 +12,12 @@ OpenBSD license style, NO DEPENDECIES.
 Clang or gcc should do it. It's C99 + posix.
 I know it's unefficient but I wanted to write
 at leats one time in my life one thread per client program.
-Windows users must compile under cygwin.
-In future maybe no cygwin client version.
-But not server.
+Server -> Unix. Client under TCL should work on any platform.
 
-Client and server need configuration. In server we basically set
-port we run it under and user + pass. Everything is in open file.
+Server need configuration. In server we basically set
+port we run it under and user + pass also histroy file.
+Everything is in open file.
+I repeat everything on server is in open file. Password too.
 It's for some buddy talk so it's just a kiddo security.
 Server keeps history up to 1024 messages. Rest is simply removed.
 
@@ -26,8 +26,11 @@ Full description how to use is in MANUAL file.
 Biggest advantage is how small and basic this soft is.
 
 How to install?
-Run make this readme directory.
-make client:	make client
-make server:	make server
+Client does not need to. Client is a tcl script. You simply need Tcl with tk.
+Vide wish.
+To compile server:
+Run make in makefile directory.
 
-No make install. You manage binaries on your own.
+make clear to reamove objects.
+
+No make install. You manage binaries/scripts on your own.

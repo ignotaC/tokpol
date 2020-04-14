@@ -153,12 +153,18 @@ void* client( void* td )  {
 
     }
     
-    printf( "clistat - %d\n", cli_stat );
 
+    printf( "clistat - %d\n", cli_stat );
     switch( cli_stat )  {
 
       case CLI_HEL:
-        send_proto( PRT_HELLO );
+        if( write_proto( sockfd, PRT_HELLO ) == -1 )  {
+
+	  close( sockfd );
+	  thread_fail( "Could not write to socket" );
+
+	}
+	puts( "Sent hello back" );
 	break;
       case CLI_LOG:
 	//check_pass();

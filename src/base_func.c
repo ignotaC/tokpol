@@ -214,6 +214,69 @@ int writefd( const int fd,
 
 }
 
+
+int write_msgpart( const int sockfd,
+	           char *buff,
+	           const size_t buff_size )  {
+
+  int counter = 0;
+  ssize_t writeret = 1, write_sum = 0;
+  while( ( size_t )write_sum < buff_size )  {
+	
+    if( ( writeret = writefd( sockfd, buff, buff_size,
+			    &write_sum ) ) == -1 )  {
+
+      if( RDWR_ERR )  {
+
+        if( counter <= COUNTER_MAX )  {
+
+          if( nanosleep( SLEEPTIME, NULL ) == -1 )
+	    if( errno != EINTR )  return -1;
+	  counter++;
+          continue;
+
+	}
+
+	return -1;
+
+      }
+
+    return -1;
+
+    }
+
+  }
+
+  if( buff_size != ( size_t )write_sum )  {
+	 
+    errno = VALUES_ERROR; // lame way but will do the job
+    return -1; // this should not happen
+
+  }
+
+  return 0;
+  
+ 
+
+}
+
+
+int write_proto( const int sockfd,
+	         const int protocol )  {
+ 
+  uint8_t proto = ( uint8_t ) protocol;
+
+  if( write_msgpart( sockfd, ( char* )&proto,
+      sizeof( proto ) ) == -1 )
+    return -1;
+  
+  return 0;
+
+}
+
+
+
+
 int mkmsg( const int protocol,
 	   char *const inmsg,
 	   const size_t inmsg_size,

@@ -115,8 +115,12 @@ pack .connectlab -side top
 
 proc exit_program { } { 
 
-  puts -nonewline $::cli_sock $proto::bye
-  close $::cli_sock;
+  if { [ info exists ::cli_sock ] }  {
+
+    catch { puts -nonewline $::cli_sock $proto::bye }
+    catch { close $::cli_sock }
+
+  }
 
   exit
 
@@ -126,8 +130,8 @@ proc connect_serv { }  {
 
   if { [ info exists ::cli_sock ] }  {
 
-    close $::cli_sock;
-    unset ::cli_sock;
+    catch { close $::cli_sock }
+    unset ::cli_sock
 
   }
 
@@ -175,9 +179,11 @@ proc connect_serv { }  {
 
     if { ![ chan configure $::cli_sock \
              -connecting ] } {
-  
-      if { [ catch { chan configure \
-              $::cli_sock -error } errstr ] }  {
+
+    catch { chan configure \
+            $::cli_sock -error  } errstr
+
+    if { [ string length $errstr ] != 0 }  {
 
         .connectlab configure -text $errstr
         .connectbut configure -state normal
@@ -186,9 +192,8 @@ proc connect_serv { }  {
 
       }
    
-      #chan configure $::cli_sock -blocking 0
       break
-      
+       
     }
 
     if { $count > 30 }  {
@@ -203,17 +208,38 @@ proc connect_serv { }  {
     
   } 
 
-  #  .connectlab configure -text $errstr
- 
   .connectbut configure -text "Connected" \
               -disabledforeground  "black" \
               -background "light green"
   update
-  fconfigure $::cli_sock -buffering none
-  puts -nonewline $::cli_sock $proto::helo
-  set ans [ read $::cli_sock 1 ]
+
+  fconfigure $::cli_sock -translation binary -blocking 0
   
+  send $proto::helo
+
+  after 2500
+  set ans [ read $::cli_sock 1 ]
+  puts [ string length $ans ] 
+  if { $ans == $proto::helo }  {
+
+    .connectbut configure -text "Server responding" \
+
+  }  else  {
+
+    .connectlab  configure -text \
+    "Server ignored us"
+    .connectbut configure -state normal
+    .connectbut configure -text "Connect"
+    return
+
+  }
+
 }
 
+proc send { data }  {
 
+  catch { puts -nonewline $::cli_sock $data }
+  catch { flush $::cli_sock }
+
+}
 
