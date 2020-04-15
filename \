@@ -180,12 +180,14 @@ proc connect_serv { }  {
     if { ![ chan configure $::cli_sock \
              -connecting ] } {
 
-      catch { chan configure \
+    catch { chan configure \
             $::cli_sock -error  } errstr
 
-      if { [ string length $errstr ] != 0 }  {
+    if { [ string length $errstr ] != 0 }  {
 
-        err_conn $errstr
+        .connectlab configure -text $errstr
+        .connectbut configure -state normal
+        .connectbut configure -text "Connect"
         return
 
       }
@@ -196,7 +198,10 @@ proc connect_serv { }  {
 
     if { $count > 30 }  {
 
-      err_conn "Connection timed out"
+      .connectlab  configure -text \
+        "Connection timed out"
+      .connectbut configure -state normal
+      .connectbut configure -text "Connect"
       return
 
     } 
@@ -210,16 +215,22 @@ proc connect_serv { }  {
 
   fconfigure $::cli_sock -translation binary -blocking 0
   
+  puts "bump"
   if { [ send $proto::helo err_conn ] }  {  return  }
-  set serv_ans [ recv 1 err_conn ]
-
-  if { $serv_ans == $proto::helo }  {
+  puts "bump"
+  after 2500
+  set ans [ read $::cli_sock 1 ]
+  puts [ string length $ans ] 
+  if { $ans == $proto::helo }  {
 
     .connectbut configure -text "Server responding" \
 
   }  else  {
 
-    err_conn "Server sending garbage"
+    .connectlab  configure -text \
+    "Server ignored us"
+    .connectbut configure -state normal
+    .connectbut configure -text "Connect"
     return
 
   }
@@ -228,7 +239,7 @@ proc connect_serv { }  {
 
 proc send { data efun }  {
 
-  if { [ catch { puts -nonewline  \
+  if { ! [ catch { puts -nonewline  \
         $::cli_sock $data } e_ret ] }  {
 
     $efun $e_ret
@@ -247,46 +258,6 @@ proc send { data efun }  {
 
 }
 
-proc recv { data_size efun }  {
-
-  set count_time 0
-  set wait_time 335
- 
-  set full_str ""
- 
-  while { $count_time < 5000 }  {
-
-    after $wait_time
-    set count_time [ expr $count_time + $wait_time ]
-    
-    if { [ catch { set data \
-        [ read $::cli_sock $data_size ] } \
-        e_ret ] }  {
-
-      err_conn $e_ret
-      return ""
-
-    }
-
-    if { [ string length $data ] }  {
-
-      set count_time 0
-      append full_str $data
-      set data_size  \
-        [ expr $data_size  - \
-        [ string length $data ] ]
-     
-      if { $data_size == 0 }  { return $full_str }
-
-    }
-
-  }
-  
-  err_conn "Server answer timed out"
-  return ""
-
-}
-
 proc err_conn { e_info } {
 
     catch { close $::cli_sock }
@@ -295,4 +266,4 @@ proc err_conn { e_info } {
     .connectbut configure -state normal
     .connectbut configure -text "Connect"
 
-} 
+}
