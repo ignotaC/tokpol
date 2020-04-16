@@ -33,6 +33,8 @@ OF THIS SOFTWARE.
 	         ( errno == EAGAIN ) || \
 		 ( errno == EINTR )
 #define VALUES_ERROR 254
+#define MAX_LEN_NAME 10
+#define MAX_LEN_PASS 30
 
 enum {
 

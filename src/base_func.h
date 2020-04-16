@@ -48,7 +48,8 @@ int read_msgpart( const int sockfd,
 
 int read_msg( const int sockfd,
 	      char *const buff,
-	      const size_t buff_size );
+	      const size_t buff_size,
+	      size_t *data_size );
 
 int read_proto( const int sockfd,
 	        char *const buff,

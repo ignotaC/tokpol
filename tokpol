@@ -224,6 +224,29 @@ proc connect_serv { }  {
 
   }
 
+  send_msg $proto::login "piotr" efun
+
+}
+
+proc send_msg { proto msg efun }  {
+
+  if { [ send $proto efun ] } { return -1 }  
+
+  set bin_data [ encoding convertto utf-8 \
+    $msg ]  
+
+  set data_size [  string length $bin_data ]
+
+  puts $data_size  
+
+  set data_size_bin [ binary format i $data_size ]
+
+  if { [ send $data_size_bin efun ] } { return -1 }  
+
+  if { [ send $bin_data efun ] }  { return -1 }
+
+  return  
+
 }
 
 proc send { data efun }  {

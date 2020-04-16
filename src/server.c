@@ -140,8 +140,6 @@ int main( int argc, char **argv, char **envp  )  {
       
     }
 
-    puts( "something came" );
-
     if( set_cloexec( sockfd ) < 0 )
       restart( envp );
 

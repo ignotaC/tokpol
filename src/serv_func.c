@@ -182,7 +182,6 @@ int parse_ptr( int *const cli_stat_ptr,
 	return -1;
 
       }
-      puts( "HELO came from new" );
       *cli_stat_ptr = CLI_HEL;
       return 0;
 
@@ -190,7 +189,7 @@ int parse_ptr( int *const cli_stat_ptr,
       switch( protocol )  {
 
         case PRT_LOGIN:
-          *cli_stat_ptr = CLI_CHK;
+          *cli_stat_ptr = CLI_LOG;
 	  return 0;
 	default:
 	  errno = 0;

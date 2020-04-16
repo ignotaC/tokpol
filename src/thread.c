@@ -83,11 +83,16 @@ void unlock_mutex( char **envp )  {
 
 void* client( void* td )  {
 
-  puts( "new thread created" );
-
   const int hash = ( ( struct thread_data* )td )->hash;
   const int sockfd = ( ( struct thread_data* )td )->sockfd;
   free( td );
+
+  if( set_nonblock( sockfd ) == -1 )  {
+
+    close( sockfd );
+    thread_fail( "Could not set socket to nonblocking" );
+
+  }
 
   ( void ) hash; // REMOVE IN FUTURE COMPILE RSHUT UP HERE
 
@@ -103,21 +108,14 @@ void* client( void* td )  {
 
   char buff[ COMMON_BUFF_SIZE ];
   const size_t buff_size = COMMON_BUFF_SIZE;
+  size_t data_size = 0;
+  char cliname[ MAX_LEN_NAME + 1 ];
 
   int cli_stat = CLI_NEW;
 
   for(;;)  {
-
-    if( cli_stat == CLI_LOG )  {
-
-      sleep( 2 );
-      // check if read
-      // also check if we have new message.
-      // do job here
-
-    }
-    
-    puts( "reading protocol" );
+  
+    puts( "reading proto" );
     if( read_proto( sockfd, buff, buff_size ) == -1 )  {
 
       int rst_type = 0;
@@ -164,10 +162,51 @@ void* client( void* td )  {
 	  thread_fail( "Could not write to socket" );
 
 	}
-	puts( "Sent hello back" );
 	break;
       case CLI_LOG:
-	//check_pass();
+	if( read_msg( sockfd, buff,
+	    buff_size, &data_size ) == -1 )  {
+
+	  close( sockfd );
+	  thread_fail( "Failed on reading log msg" );
+
+	}
+
+        // nick can not be longer than 10 chars
+	if( data_size > MAX_LEN_NAME )  {
+
+	  close( sockfd );
+	  thread_fail( "Client name length too long" );
+
+	}
+
+	// we check size safty in msg_size
+	buff[ data_size ] = 0;
+        strcpy( cliname, buff_size );
+	
+	if( read_msg( sockfd, buff,
+	    buff_size, &data_size ) == -1 )  {
+
+	  // send proto bye wait few sec
+	  close( sockfd );
+	  thread_fail( "Failed on reading log msg" );
+
+	}
+
+        // Pass can not be longer than 30 chars
+	if( data_size > MAX_LEN_PASS )  {
+
+	  close( sockfd );
+	  thread_fail( "Client pass too long" );
+
+	}
+
+	// we check size safty in msg_size
+	buff[ data_size ] = 0;
+	
+        // check if client name and pass ok
+	// ok or bye.
+
 	//send_proto( PRT_OK );
 	break;
       case CLI_MSG:
@@ -182,8 +221,6 @@ void* client( void* td )  {
 	thread_fail( "Wrong client stat, should not happen" );
         
     }
-
-    puts( "returning" );
 
   }
 

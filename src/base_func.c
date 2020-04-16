@@ -121,7 +121,9 @@ int read_msgpart( const int sockfd,
           continue;
 
 	}
-
+      
+	perror( "Client timed out" );
+	errno = 0;
 	return -1;
 
       }
@@ -145,7 +147,8 @@ int read_msgpart( const int sockfd,
 
 int read_msg( const int sockfd,
 	      char *const buff,
-	      const size_t buff_size )  {
+	      const size_t buff_size,
+	      size_t *datasize )  {
 
   uint32_t msg_size = 0;
   if( buff_size < sizeof( msg_size ) )  {
@@ -154,15 +157,19 @@ int read_msg( const int sockfd,
     return -1;
 
   }
+  
   if( read_msgpart( sockfd, ( char* )&msg_size, sizeof( msg_size ) ) == -1 )
     return -1;
 
-  if( buff_size < msg_size )  {
+  if( buff_size < msg_size - 1 )  {
 
+    perror( "Malicious client behavior" );
     errno = VALUES_ERROR;
     return -1;
 
   }
+  
+  *data_size = msg_size;
 
   if( read_msgpart( sockfd, buff, msg_size ) == -1 )
     return -1;
