@@ -131,7 +131,7 @@ proc connect_serv { }  {
   if { [ info exists ::cli_sock ] }  {
 
     catch { close $::cli_sock }
-    unset ::cli_sock
+    catch { unset ::cli_sock }
 
   }
 
@@ -211,8 +211,8 @@ proc connect_serv { }  {
   fconfigure $::cli_sock -translation binary -blocking 0
   
   if { [ send $proto::helo err_conn ] }  {  return  }
-  set serv_ans [ recv 1 err_conn ]
 
+  set serv_ans [ recv 1 err_conn ]
   if { $serv_ans == $proto::helo }  {
 
     .connectbut configure -text "Server responding" \
@@ -224,20 +224,38 @@ proc connect_serv { }  {
 
   }
 
-  send_msg $proto::login "piotr" efun
+  update
+  if { [ send_prtmsg $proto::login $::login_str \
+      err_conn ] }  { return }
+  if { [ send_msg $::password_str err_conn ] } \
+      { return }
+
+  set serv_ans [ recv 1 err_conn ]
+  if { $serv_ans == $proto::ok }  {
+
+    .connectbut configure -text \
+      "Loged as $::login_str"
+
+  }  elseif {  $serv_ans == $proto::bye  }  {
+
+    err_conn "Wrong login or password"
+    return
+
+  }  else  {
+
+    err_conn "Server sending garbage" 
+
+  }
+
 
 }
 
-proc send_msg { proto msg efun }  {
-
-  if { [ send $proto efun ] } { return -1 }  
+proc send_msg { msg efun }  {
 
   set bin_data [ encoding convertto utf-8 \
     $msg ]  
 
   set data_size [  string length $bin_data ]
-
-  puts $data_size  
 
   set data_size_bin [ binary format i $data_size ]
 
@@ -245,7 +263,18 @@ proc send_msg { proto msg efun }  {
 
   if { [ send $bin_data efun ] }  { return -1 }
 
-  return  
+  return 0
+
+}
+
+
+proc send_prtmsg { proto msg efun }  {
+
+  if { [ send $proto efun ] } { return -1 }  
+
+  if { [ send_msg $msg efun ] }  { return -1 }
+
+  return 0
 
 }
 
@@ -313,8 +342,9 @@ proc recv { data_size efun }  {
 proc err_conn { e_info } {
 
     catch { close $::cli_sock }
-    unset ::cli_sock
+    catch { unset ::cli_sock }
     .connectlab  configure -text $e_info
+    .connectbut  configure -background yellow
     .connectbut configure -state normal
     .connectbut configure -text "Connect"
 

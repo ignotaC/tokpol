@@ -85,6 +85,7 @@ void* client( void* td )  {
 
   const int hash = ( ( struct thread_data* )td )->hash;
   const int sockfd = ( ( struct thread_data* )td )->sockfd;
+  char **const envp = ( ( struct thread_data* )td )->envp;
   free( td );
 
   if( set_nonblock( sockfd ) == -1 )  {
@@ -110,6 +111,7 @@ void* client( void* td )  {
   const size_t buff_size = COMMON_BUFF_SIZE;
   size_t data_size = 0;
   char cliname[ MAX_LEN_NAME + 1 ];
+  memset( cliname, 0, MAX_LEN_NAME + 1 );
 
   int cli_stat = CLI_NEW;
 
@@ -143,6 +145,7 @@ void* client( void* td )  {
 
     }
 
+
     puts( "parsing protocol" );
     if( parse_ptr( &cli_stat, buff, buff_size ) == -2 )  {
 
@@ -156,80 +159,110 @@ void* client( void* td )  {
     switch( cli_stat )  {
 
       case CLI_HEL:
-        if( write_proto( sockfd, PRT_HELLO ) == -1 )  {
+       if( write_proto( sockfd, PRT_HELLO ) == -1 )  {
 
-	  close( sockfd );
-	  thread_fail( "Could not write to socket" );
+         close( sockfd );
+         thread_fail( "Could not write to socket" );
 
-	}
-	break;
+       }
+       break;
       case CLI_LOG:
-	if( read_msg( sockfd, buff,
-	    buff_size, &data_size ) == -1 )  {
+       if( read_msg( sockfd, buff,
+         buff_size, &data_size ) == -1 )  {
 
-	  close( sockfd );
-	  thread_fail( "Failed on reading log msg" );
+         close( sockfd );
+         thread_fail( "Failed on reading log msg" );
 
-	}
+       }
 
-        // nick can not be longer than 10 chars
-	if( data_size > MAX_LEN_NAME )  {
+       // nick can not be longer than max len chars
+       if( data_size > MAX_LEN_NAME )  {
 
-	  close( sockfd );
-	  thread_fail( "Client name length too long" );
+         close( sockfd );
+         thread_fail( "Client name length too long" );
 
-	}
+       }
 
-	// we check size safty in msg_size
-	buff[ data_size ] = 0;
-        strcpy( cliname, buff_size );
+       // we check size safty in msg_size
+       buff[ data_size ] = 0;
+       strncpy( cliname, buff, MAX_LEN_NAME + 1 );
 	
-	if( read_msg( sockfd, buff,
-	    buff_size, &data_size ) == -1 )  {
+       if( read_msg( sockfd, buff,
+           buff_size, &data_size ) == -1 )  {
 
-	  // send proto bye wait few sec
-	  close( sockfd );
-	  thread_fail( "Failed on reading log msg" );
+         // send proto bye wait few sec
+         close( sockfd );
+         thread_fail( "Failed on reading log msg" );
 
-	}
+       }
 
-        // Pass can not be longer than 30 chars
-	if( data_size > MAX_LEN_PASS )  {
+       // Pass can not be longer max len chars
+       if( data_size > MAX_LEN_PASS )  {
 
-	  close( sockfd );
-	  thread_fail( "Client pass too long" );
+         close( sockfd );
+         thread_fail( "Client pass too long" );
 
-	}
+       }
+       buff[ data_size ] = 0;
 
-	// we check size safty in msg_size
-	buff[ data_size ] = 0;
-	
-        // check if client name and pass ok
-	// ok or bye.
+       for( int i = 0;	lock_mutex( 1, envp ) != 0;
+           i++ )  {
 
-	//send_proto( PRT_OK );
-	break;
-      case CLI_MSG:
-	//save_msg();
-	break;
+         if( i > 10 )  restart( envp );
+
+       }
+
+       int cliloged = 0;
+       for( size_t i = 0; i < sd.logpass_size; i++ ) {
+
+         if( strncmp( cliname, sd.logpass[i][0],
+	     MAX_LEN_NAME ) )  continue;
+	 if( strncmp( buff, sd.logpass[i][1],
+             MAX_LEN_PASS ) )  continue;
+	 cliloged = 1;
+	 break;
+
+       } 
+
+       unlock_mutex( envp );
+         
+       if( cliloged )  {
+
+	 puts( "LOGED" );
+
+         if( write_proto( sockfd, PRT_OK ) == -1 )  {
+
+           close( sockfd );
+           thread_fail( "Could not write to socket" );
+
+         }
+
+         break;
+
+       }  // else send bye
+       if( write_proto( sockfd, PRT_BYE ) == -1 )  {
+
+         close( sockfd );
+         thread_fail( "Could not write to socket" );
+
+       }
       case CLI_BYE:
-	puts( "Leaving" );
-        shutdown( sockfd,  SHUT_RDWR );
-	goto thread_end;
+       puts( "Shuting down" );
+       shutdown( sockfd,  SHUT_RDWR );
+       goto thread_end;
       default:
-        close( sockfd );
-	thread_fail( "Wrong client stat, should not happen" );
+       close( sockfd );
+       thread_fail( "Wrong client stat, should not happen" );
         
     }
 
   }
 
- thread_end:
-  close( sockfd );
-  return NULL;
+  thread_end:
+   close( sockfd );
+   return NULL;
 
 }
-
 
 
 

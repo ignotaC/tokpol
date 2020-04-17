@@ -27,19 +27,23 @@ OF THIS SOFTWARE.
 
 #include <pthread.h>
 
+
+extern pthread_mutex_t main_mutex;
+// mutex start
 extern const char *program_path;
-extern char *saved_msg;
 extern struct msg_buff *mb_cur;
+extern struct server_data sd;
+// Mutex end
 
 
 struct thread_data  {
 
   int sockfd;
   int hash;
+  char **envp;
 
 };
 
-pthread_mutex_t main_mutex;
 
 void thread_fail( const char *const failstr );
 int lock_mutex( const int timewait_sec, char **envp );

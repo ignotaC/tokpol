@@ -48,15 +48,19 @@ OF THIS SOFTWARE.
 #define BUFF_SIZE 8192
 
 // Made for God glory.
+/////////////////////
+
 const char *program_path = NULL;
 
 /// MUTEX
 pthread_mutex_t main_mutex;
 struct msg_buff mb[ MB_SIZE ];
+// ^ we acces it via mb_cur
 struct msg_buff *mb_cur = &mb[0];
 struct server_data sd;
-char *saved_msg = NULL;
 /// MUTEX END
+
+char *saved_msg = NULL;
 
 int main( int argc, char **argv, char **envp  )  {
 
@@ -66,7 +70,6 @@ int main( int argc, char **argv, char **envp  )  {
   char **server_conf = file_to_mem( argv[1], buff, BUFF_SIZE );
   if( server_conf == NULL )  fail( "Couold not load server_conf file" );
   puts( "Configuration file loaded" );
-  struct server_data sd;
   if( load_sd( server_conf, &sd ) == -1 )
     fail( "Failed on loading server data" );
   puts( "Server variables loaded" );
@@ -87,7 +90,7 @@ int main( int argc, char **argv, char **envp  )  {
   init_msg_buff();
   puts( "Message buff set up." );
   if( load_saved_msg() < 0 )  fail( "Chat loading fail" );
-  puts( "Loading saved chat done" );
+  puts( "Saved Chat Loaded" );
 
   struct sigaction sa;
   memset( &sa, 0, sizeof( sa ) );
@@ -156,6 +159,7 @@ int main( int argc, char **argv, char **envp  )  {
       restart( envp );
     td->hash = hash;
     td->sockfd = sockfd;
+    td->envp = envp;
 
     estat = pthread_create( &pt, NULL, client, td );
     if( estat == EINVAL )  restart( envp );

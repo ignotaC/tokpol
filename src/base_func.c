@@ -161,6 +161,13 @@ int read_msg( const int sockfd,
   if( read_msgpart( sockfd, ( char* )&msg_size, sizeof( msg_size ) ) == -1 )
     return -1;
 
+  if( msg_size == 0 )  {
+
+    *datasize = 0;
+    return 0;
+
+  }
+
   if( buff_size < msg_size - 1 )  {
 
     perror( "Malicious client behavior" );
@@ -169,7 +176,7 @@ int read_msg( const int sockfd,
 
   }
   
-  *data_size = msg_size;
+  *datasize = msg_size;
 
   if( read_msgpart( sockfd, buff, msg_size ) == -1 )
     return -1;
