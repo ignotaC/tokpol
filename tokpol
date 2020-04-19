@@ -40,6 +40,7 @@ namespace eval proto {
   variable msg   [binary format B8 00000010 ]
   variable ok    [binary format B8 00000011 ]
   variable bye   [binary format B8 00000100 ]
+  variable ping  [binary format B8 00000101 ]
 
 }
 
@@ -51,6 +52,9 @@ set ip_str ""
 set port_str ""
 set login_str ""
 set password_str ""
+
+set program_state 0
+set log_state 0 
 
 if { ! [ catch { set initf [ open $def_initf_name r ] } ] } {
 
@@ -105,6 +109,56 @@ pack .connectbut  -side top
 label .connectlab -foreground red \
       -font bold
 pack .connectlab -side top
+
+
+proc mainloop {  } {
+    
+  while { $::log_state }  {
+
+    set proto_byte [ recv_byte err_conn ]
+    if { $proto_byte == "" }  { break }
+    if { $proto_byte == $proto::ping }  {
+
+      puts "ping"
+      send $proto::ping err_conn
+      continue
+      
+    } elseif { $proto_byte == $proto::bye }  {
+
+      err_conn "Server closed connection"
+      break;
+
+    } elseif { $proto_byte == $proto::msg }  {
+
+      set message [ recv_msg err_conn ]
+      if { $message != "" }  {
+
+        .textbox configure -state normal
+        .textbox insert end $message
+        .textbox configure -state disabled
+        update
+        after 25
+        continue
+
+      }
+
+    }  else {
+
+      err_conn "Server sending garbage";
+      break;
+
+    }
+
+    break;
+
+  }
+
+  after 1000 [ list after idle [ namespace code \
+  [ info level 0 ] ] ]
+
+}
+
+after 0 mainloop
 
 
 #######################
@@ -247,6 +301,59 @@ proc connect_serv { }  {
 
   }
 
+  if { ! $::program_state }  {
+   
+    set ::program_state 1
+    
+    after 25
+    destroy .iplab
+    update    
+ 
+    after 25
+    destroy .ipent
+    update    
+
+    after 25
+    destroy .portlab
+    update    
+
+    after 25
+    destroy .portent
+    update    
+
+    after 25
+    destroy .loginlab
+    update    
+
+    after 25
+    destroy .loginent
+    update    
+
+    after 25
+    destroy .passlab
+    update    
+
+    after 25
+    destroy .passent
+    update    
+
+    after 25
+    text .textbox -width 75 -height 15 \
+        -wrap word -state disabled \
+        -background "grey15" -foreground "white"
+    pack .textbox -side top -fill both -expand 1
+    update
+
+    after 25
+    text .userbox -width 75 -height 3 \
+        -background "grey15" -foreground "white"
+    pack .userbox -side top -fill both
+    update
+
+  }
+
+  .textbox delete 1.0 end
+  set ::log_state 1 
 
 }
 
@@ -259,9 +366,9 @@ proc send_msg { msg efun }  {
 
   set data_size_bin [ binary format i $data_size ]
 
-  if { [ send $data_size_bin efun ] } { return -1 }  
+  if { [ send $data_size_bin $efun ] } { return -1 }  
 
-  if { [ send $bin_data efun ] }  { return -1 }
+  if { [ send $bin_data $efun ] }  { return -1 }
 
   return 0
 
@@ -270,9 +377,9 @@ proc send_msg { msg efun }  {
 
 proc send_prtmsg { proto msg efun }  {
 
-  if { [ send $proto efun ] } { return -1 }  
+  if { [ send $proto $efun ] } { return -1 }  
 
-  if { [ send_msg $msg efun ] }  { return -1 }
+  if { [ send_msg $msg $efun ] }  { return -1 }
 
   return 0
 
@@ -302,20 +409,19 @@ proc send { data efun }  {
 proc recv { data_size efun }  {
 
   set count_time 0
-  set wait_time 335
+  set wait_time 50
  
   set full_str ""
  
   while { $count_time < 5000 }  {
 
-    after $wait_time
     set count_time [ expr $count_time + $wait_time ]
     
     if { [ catch { set data \
         [ read $::cli_sock $data_size ] } \
         e_ret ] }  {
 
-      err_conn $e_ret
+      $efun $e_ret
       return ""
 
     }
@@ -332,15 +438,46 @@ proc recv { data_size efun }  {
 
     }
 
+    after $wait_time
+
   }
   
-  err_conn "Server answer timed out"
+  $efun "Server answer timed out"
   return ""
+
+}
+
+
+proc recv_msg { efun }  {
+
+  set msg_size_bin [ recv 4 efun ]
+  if { $msg_size_bin == "" }  { return }
+  binary scan $msg_size_bin i msg_size
+  
+  set message [ recv $msg_size efun ]
+  if { $message == "" }  { return }
+  return $message
+
+}
+
+
+proc recv_byte { efun }  {
+
+  if { [ catch { set ourbyte \
+      [ read $::cli_sock 1 ] } e_ret ] }  {
+
+    $efun $e_ret
+    return ""
+
+  }
+
+  return $ourbyte
 
 }
 
 proc err_conn { e_info } {
 
+    set ::log_state 0 
     catch { close $::cli_sock }
     catch { unset ::cli_sock }
     .connectlab  configure -text $e_info

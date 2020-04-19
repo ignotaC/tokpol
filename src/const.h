@@ -29,9 +29,9 @@ OF THIS SOFTWARE.
 #define SAFE_BUFF_SIZE ( COMMON_BUFF_SIZE - 1 )
 #define SLEEPTIME &( struct timespec ){ 0, 500000000 }
 #define COUNTER_MAX 40
-#define RDWR_ERR ( errno == EWOULDBLOCK ) || \
+#define RDWR_ERR ( ( errno == EWOULDBLOCK ) || \
 	         ( errno == EAGAIN ) || \
-		 ( errno == EINTR )
+		 ( errno == EINTR ) )
 #define VALUES_ERROR 254
 #define MAX_LEN_NAME 10
 #define MAX_LEN_PASS 30
@@ -42,7 +42,8 @@ enum {
   PRT_LOGIN,
   PRT_MSG,
   PRT_OK,
-  PRT_BYE
+  PRT_BYE,
+  PRT_PING
 
 };
 

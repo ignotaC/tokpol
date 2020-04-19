@@ -25,7 +25,6 @@ OF THIS SOFTWARE.
 #include "thread.h"
 
 #include "serv_func.h"
-
 #include "serv_globals.h"
 
 #include "const.h"
@@ -114,14 +113,73 @@ void* client( void* td )  {
   memset( cliname, 0, MAX_LEN_NAME + 1 );
 
   int cli_stat = CLI_NEW;
+  int ping_time = 0;
+  uint8_t msgstat_prt;
 
   for(;;)  {
   
-    puts( "reading proto" );
+    if( cli_stat == CLI_MSG )  {
+      
+      if( ping_time > PING_MAX )  {
+
+        close( sockfd );
+	thread_fail( "Client timed out" );
+
+      }
+      if( ping_time > PING_CLOCK )  {
+        
+        if( write_proto( sockfd, PRT_PING ) == -1 )  {
+
+          close( sockfd );
+          thread_fail( "Could not write to socket" );
+
+        }
+
+        sleep( 1 );
+
+      }
+      
+      ping_time++;
+      if( nanosleep( SLEEPTIME, NULL ) == -1 )  {
+
+        close( sockfd );
+	thread_fail( "Failed on nanosleep" );
+
+      }
+
+      if( read( sockfd, &msgstat_prt,
+          sizeof msgstat_prt ) == -1 )  {
+
+        if( RDWR_ERR )  continue;
+	close( sockfd );
+	thread_fail( "Failed on probing socket" );
+
+      }
+      
+      // no matter what is happening - client is alive
+      ping_time = 0;
+      if( msgstat_prt == PRT_PING )  {
+
+        continue;
+
+      }
+
+      if( msgstat_prt == PRT_BYE )  {
+
+        shutdown( sockfd, SHUT_RDWR );
+	sleep( 1 );
+	close( sockfd );
+	return NULL;
+
+      }
+
+      continue;
+
+    }
+  
     if( read_proto( sockfd, buff, buff_size ) == -1 )  {
 
       int rst_type = 0;
-      //close( sockfd );
       switch( errno )  {
 
         case 0:
@@ -146,7 +204,6 @@ void* client( void* td )  {
     }
 
 
-    puts( "parsing protocol" );
     if( parse_ptr( &cli_stat, buff, buff_size ) == -2 )  {
 
       close( sockfd );
@@ -224,11 +281,7 @@ void* client( void* td )  {
 
        } 
 
-       unlock_mutex( envp );
-         
        if( cliloged )  {
-
-	 puts( "LOGED" );
 
          if( write_proto( sockfd, PRT_OK ) == -1 )  {
 
@@ -236,10 +289,21 @@ void* client( void* td )  {
            thread_fail( "Could not write to socket" );
 
          }
+         if( update_msg( sockfd, buff,
+			 buff_size ) == -1 )  {
 
+	   unlock_mutex( envp );
+	   close( sockfd );
+	   thread_fail( "Failed on sending msglog" );
+
+	 }
+         unlock_mutex( envp );
+	 cli_stat = CLI_MSG;
          break;
 
        }  // else send bye
+
+       unlock_mutex( envp );
        if( write_proto( sockfd, PRT_BYE ) == -1 )  {
 
          close( sockfd );

@@ -274,6 +274,30 @@ int write_msgpart( const int sockfd,
 
 }
 
+int write_msg( const int sockfd,
+	       char *const buff,
+	       const size_t buff_size,
+	       const size_t datasize )  {
+
+  uint32_t msg_size = datasize;
+  if( buff_size < msg_size )  {
+
+    errno = VALUES_ERROR;
+    return -1;
+
+  }
+  
+  if( write_msgpart( sockfd, ( char* )&msg_size, sizeof( msg_size ) ) == -1 )
+    return -1;
+
+  if( write_msgpart( sockfd, buff, msg_size ) == -1 )
+    return -1;
+
+  return 0;
+
+}
+
+
 
 int write_proto( const int sockfd,
 	         const int protocol )  {

@@ -66,22 +66,18 @@ int main( int argc, char **argv, char **envp  )  {
 
   char buff[ BUFF_SIZE ];
 
-  if( argc != 2 )  fail( "Missing server config file" );
+  if( argc != 2 )
+    fail( "Missing server config file." );
   char **server_conf = file_to_mem( argv[1], buff, BUFF_SIZE );
-  if( server_conf == NULL )  fail( "Couold not load server_conf file" );
-  puts( "Configuration file loaded" );
+  if( server_conf == NULL )
+    fail( "Couold not load server_conf file." );
+  puts( "Configuration file loaded." );
   if( load_sd( server_conf, &sd ) == -1 )
-    fail( "Failed on loading server data" );
-  puts( "Server variables loaded" );
+    fail( "Failed on loading server data." );
+  puts( "Server variables loaded." );
   // get rid of loaded to memory file.
   memfile_free( server_conf );
   saved_msg = sd.history_file;
-
-  program_path = getenv( "HOME" );
-  if( program_path == NULL )  fail( "getenv fail" );
-  if( chdir( program_path ) )  fail( "chdir fail" );
-  printf( "Program started from path:%s\n",
-	  program_path );
 
   int estat = pthread_mutex_init( &main_mutex, NULL );
   if( estat )  fail( strerror( estat ) );
@@ -89,8 +85,9 @@ int main( int argc, char **argv, char **envp  )  {
 
   init_msg_buff();
   puts( "Message buff set up." );
-  if( load_saved_msg() < 0 )  fail( "Chat loading fail" );
-  puts( "Saved Chat Loaded" );
+  if( load_saved_msg() < 0 )
+    fail( "Chat loading fail." );
+  puts( "Saved chat loaded." );
 
   struct sigaction sa;
   memset( &sa, 0, sizeof( sa ) );
@@ -112,8 +109,6 @@ int main( int argc, char **argv, char **envp  )  {
   puts( "Turning to daemon." ); 
   // if( turn_daemon() < 0 )  fail( "Could not turn to daemon" );
   // turned off for debug for now
-
-
 
   struct thread_data *td;
   struct sockaddr_in cliaddr;

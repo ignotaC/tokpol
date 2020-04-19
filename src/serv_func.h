@@ -72,5 +72,8 @@ struct server_data  {
 int load_sd( char *const*const servconf,
              struct server_data *sd );
 
+int update_msg( const int sockfd,
+		char *buff,
+		const size_t buff_size );
 
 #endif

@@ -23,6 +23,8 @@ OF THIS SOFTWARE.
 
 
 #include "serv_func.h"
+#include "serv_globals.h"
+#include "base_func.h"
 
 #include "const.h"
 
@@ -95,12 +97,13 @@ void init_msg_buff( void )  {
 
 int load_saved_msg( void )  {
 
+  puts( saved_msg );
   FILE *chatfile = fopen( saved_msg, "r" );
   if( chatfile == NULL )  {
 
     if( errno == ENOENT )  {
 
-      puts( "Saved chat file does not exist" );
+      perror( "Saved chat file does not exist." );
       return 0;
 
     }
@@ -117,6 +120,35 @@ int load_saved_msg( void )  {
   return 0;
 
 }
+
+
+// MUTEX MUST BE LOCKED ON THIS!!!!!
+int update_msg( const int sockfd,
+		char *buff,
+	       	const size_t buff_size )  {
+
+  struct msg_buff *mbp = mb_cur->next;
+  while( mbp != mb_cur ) {  
+	  
+    if( mbp->msg[0] != '\0' )  {
+
+      size_t msg_size = strnlen( mbp->msg, MSG_SIZE );
+      memcpy( buff, mbp->msg, msg_size );
+      if( write_proto( sockfd, PRT_MSG ) == -1 )
+        return -1;
+      if( write_msg( sockfd, buff, buff_size,
+	             msg_size ) == -1 )  return -1;
+
+    }
+
+    mbp = mbp->next;
+
+  }
+
+  return 0;
+
+}
+
 
 
 int save_msg( char **envp )  {
@@ -194,19 +226,6 @@ int parse_ptr( int *const cli_stat_ptr,
 	default:
 	  errno = 0;
 	  perror( "Wrong protocol on hello client" );
-	  return -1;
-
-      }
-      
-    case CLI_LOG: 
-      switch( protocol )  {
-
-        case PRT_MSG:
-          *cli_stat_ptr = CLI_MSG;
-	  return 0;
-        default:
-	  errno = 0;
-	  perror( "Wrong protocol on loged client" );
 	  return -1;
 
       }

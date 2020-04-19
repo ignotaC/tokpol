@@ -29,6 +29,8 @@ OF THIS SOFTWARE.
 
 #define MSG_SIZE 8192
 #define MB_SIZE 1024
+#define PING_CLOCK 600
+#define PING_MAX 620
 
 struct msg_buff {
 
