@@ -94,8 +94,6 @@ void* client( void* td )  {
 
   }
 
-  ( void ) hash; // REMOVE IN FUTURE COMPILE RSHUT UP HERE
-
   int status;
   if( ( status = pthread_detach( pthread_self() ) ) != 0 )  {
 
@@ -115,11 +113,49 @@ void* client( void* td )  {
   int cli_stat = CLI_NEW;
   int ping_time = 0;
   uint8_t msgstat_prt;
+  struct msg_buff *thread_pos = NULL;
 
   for(;;)  {
   
     if( cli_stat == CLI_MSG )  {
-      
+ 
+      for( int i = 0;	lock_mutex( 1, envp ) != 0;
+          i++ )  {
+
+        if( i > 10 )  restart( envp );
+
+      }
+
+      if( thread_pos != mb_cur )  {
+
+        do {
+
+          thread_pos = thread_pos->next;
+          if( write_proto( sockfd, PRT_MSG ) == -1 ) {
+
+	    close( sockfd );
+	    thread_fail( "Fail on writing to socket" );
+            unlock_mutex( envp );
+
+	  }
+	  size_t msg_len = strnlen( thread_pos->msg,
+              MSG_SIZE );
+	  if( write_msg( sockfd, thread_pos->msg,
+	      MSG_SIZE, msg_len ) == -1 )  {
+
+	    close( sockfd );
+	    thread_fail( "Fail on writing to socket" );
+            unlock_mutex( envp );
+
+	  }
+
+
+	}  while( thread_pos != mb_cur );
+
+      }
+
+      unlock_mutex( envp );
+
       if( ping_time > PING_MAX )  {
 
         close( sockfd );
@@ -161,6 +197,38 @@ void* client( void* td )  {
       if( msgstat_prt == PRT_PING )  {
 
         continue;
+
+      }
+
+      if( msgstat_prt == PRT_MSG )  {
+
+        if( read_msg( sockfd, buff,
+            buff_size, &data_size ) == -1 )  {
+
+          close( sockfd );
+          thread_fail( "Failed on reading msg" );
+
+        }
+
+        for( int i = 0;	lock_mutex( 1, envp ) != 0;
+           i++ )  {
+
+          if( i > 10 )  restart( envp );
+
+        }
+
+	mb_cur = mb_cur->next;
+	time_t cur_time = time( NULL );
+        sprintf( mb_cur->msg, "%s %d %s", cliname, hash,
+		 ctime( &cur_time ) );
+	save_msg( envp );
+
+	mb_cur = mb_cur->next;
+	sprintf( mb_cur->msg, buff, data_size );
+	mb_cur->msg[ data_size ] = '\0';
+	save_msg( envp );
+
+	unlock_mutex( envp );
 
       }
 
@@ -212,7 +280,6 @@ void* client( void* td )  {
     }
     
 
-    printf( "clistat - %d\n", cli_stat );
     switch( cli_stat )  {
 
       case CLI_HEL:
@@ -285,6 +352,7 @@ void* client( void* td )  {
 
          if( write_proto( sockfd, PRT_OK ) == -1 )  {
 
+	   unlock_mutex( envp );
            close( sockfd );
            thread_fail( "Could not write to socket" );
 
@@ -297,6 +365,8 @@ void* client( void* td )  {
 	   thread_fail( "Failed on sending msglog" );
 
 	 }
+
+	 thread_pos = mb_cur;
          unlock_mutex( envp );
 	 cli_stat = CLI_MSG;
          break;

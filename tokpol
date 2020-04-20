@@ -22,7 +22,7 @@
 #
 #*/
 
-
+# made for God glory
 
 #####################
 #
@@ -135,6 +135,7 @@ proc mainloop {  } {
 
         .textbox configure -state normal
         .textbox insert end $message
+        .textbox see end
         .textbox configure -state disabled
         update
         after 25
@@ -348,10 +349,26 @@ proc connect_serv { }  {
     text .userbox -width 75 -height 3 \
         -background "grey15" -foreground "white"
     pack .userbox -side top -fill both
-    update
+
+    # action on enter!
+    bind .userbox <Return> { 
+ 
+      set user_message [ .userbox get 1.0 end ]
+      if { ![ send_prtmsg $proto::msg $user_message \
+        err_conn ] }  {
+    
+        .userbox delete 1.0 end
+        update
+        .userbox delete 1.0 end
+        update
+
+      }
+
+    }
 
   }
 
+  # clear textbox
   .textbox delete 1.0 end
   set ::log_state 1 
 

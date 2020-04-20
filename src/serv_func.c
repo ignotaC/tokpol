@@ -97,7 +97,6 @@ void init_msg_buff( void )  {
 
 int load_saved_msg( void )  {
 
-  puts( saved_msg );
   FILE *chatfile = fopen( saved_msg, "r" );
   if( chatfile == NULL )  {
 
@@ -112,7 +111,7 @@ int load_saved_msg( void )  {
 
   }
 
-  while( fgets( mb_cur->msg, MSG_SIZE, chatfile ) != NULL )
+  while( fgets( mb_cur->msg, MSG_SIZE - 1, chatfile ) != NULL )
     mb_cur = mb_cur->next;
 
   if( ferror( chatfile ) )  return -1;
@@ -127,9 +126,10 @@ int update_msg( const int sockfd,
 		char *buff,
 	       	const size_t buff_size )  {
 
-  struct msg_buff *mbp = mb_cur->next;
-  while( mbp != mb_cur ) {  
+  struct msg_buff *mbp = mb_cur;
+  do {  
 	  
+    mbp = mbp->next;
     if( mbp->msg[0] != '\0' )  {
 
       size_t msg_size = strnlen( mbp->msg, MSG_SIZE );
@@ -141,9 +141,8 @@ int update_msg( const int sockfd,
 
     }
 
-    mbp = mbp->next;
 
-  }
+  } while( mbp != mb_cur );
 
   return 0;
 
@@ -151,7 +150,7 @@ int update_msg( const int sockfd,
 
 
 
-int save_msg( char **envp )  {
+void save_msg( char **envp )  {
 
   FILE *filechat = NULL;
 
@@ -174,8 +173,6 @@ int save_msg( char **envp )  {
 
   fclose( filechat );
 
-  return 0;
-
 }
              
 
@@ -193,8 +190,6 @@ int parse_ptr( int *const cli_stat_ptr,
   }
 
   memcpy( &protocol, buff, sizeof( protocol ) );
-
-  printf( "protocol %d\n", ( int ) protocol );
 
   if( protocol == PRT_BYE )  {
     

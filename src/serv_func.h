@@ -50,7 +50,7 @@ void restart( char **envp );
 
 void init_msg_buff( void );
 int load_saved_msg( void );
-int save_msg( char **envp );
+void save_msg( char **envp );
 
 int parse_ptr( int *const cli_stat_ptr,
 	       char *const buff,

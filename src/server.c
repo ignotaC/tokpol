@@ -56,7 +56,7 @@ const char *program_path = NULL;
 pthread_mutex_t main_mutex;
 struct msg_buff mb[ MB_SIZE ];
 // ^ we acces it via mb_cur
-struct msg_buff *mb_cur = &mb[0];
+struct msg_buff *mb_cur = mb;
 struct server_data sd;
 /// MUTEX END
 
@@ -121,7 +121,6 @@ int main( int argc, char **argv, char **envp  )  {
     // This is not busy server.
     // Protects from jokers to some point.
     sleep( 1 ); 
-    puts( "waiting for connection" );
     if( ( sockfd = accept( listenfd,
 			   ( struct sockaddr* ) &cliaddr,
 			   &clilen ) ) < 0 )  {
