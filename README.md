@@ -25,8 +25,11 @@ Server keeps history up to 1024 messages. Rest is simply removed.
 Biggest advantage is how small and basic this soft is.
 
 How to install?
-Client does not need to. Client is a tcl script. You simply need Tcl with tk.
-Vide wish.
+Client on unix needs to get tcl and wish packages. After that he runs ./tokpol script.
+On windows client needs to download tcl+tk binary. I belive easiest way to do it is from here:
+https://www.magicsplat.com/tcl-installer/index.html
+After that download tokpol and tkopol.bat, put them in same directory. To run program run tokpol.bat
+
 To compile server:
 Run make in makefile directory.
 
