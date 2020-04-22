@@ -112,11 +112,13 @@ pack .connectlab -side top
 
 
 proc mainloop {  } {
-    
+ 
   while { $::log_state }  {
+
 
     set proto_byte [ recv_byte err_conn ]
     if { $proto_byte == "" }  { break }
+    puts  "we got some"
     if { $proto_byte == $proto::ping }  {
 
       puts "ping"
@@ -125,10 +127,13 @@ proc mainloop {  } {
       
     } elseif { $proto_byte == $proto::bye }  {
 
+      puts "bye from server"
       err_conn "Server closed connection"
       break;
 
     } elseif { $proto_byte == $proto::msg }  {
+
+      puts "crap in"
 
       set message [ recv_msg err_conn ]
       if { $message != "" }  {
@@ -145,6 +150,7 @@ proc mainloop {  } {
 
     }  else {
 
+      puts "what happens"
       err_conn "Server sending garbage";
       break;
 
@@ -354,9 +360,12 @@ proc connect_serv { }  {
     bind .userbox <Return> { 
  
       set user_message [ .userbox get 1.0 end ]
-      if { ![ send_prtmsg $proto::msg $user_message \
+      puts $user_message
+      if { ! [ send_prtmsg $proto::msg $user_message \
         err_conn ] }  {
-    
+
+
+        puts "in"    
         .userbox delete 1.0 end
         update
         .userbox delete 1.0 end
@@ -472,8 +481,9 @@ proc recv_msg { efun }  {
   binary scan $msg_size_bin i msg_size
   
   set message [ recv $msg_size efun ]
+  set encoded_msg [encoding convertfrom utf-8 $message]
   if { $message == "" }  { return }
-  return $message
+  return $encoded_msg
 
 }
 
