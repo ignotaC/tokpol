@@ -1,5 +1,6 @@
 CC = cc -O2 -std=c99
-CFLAGS = -Wall -Wextra -Wpedantic -D_POSIX_C_SOURCE=200809L
+CFLAGS = -Wall -Wextra -pedantic \
+	 -D_POSIX_C_SOURCE=200809L
 THRD = -pthread
 SRC = src
 BIN = .

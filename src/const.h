@@ -27,7 +27,7 @@ OF THIS SOFTWARE.
 
 #define COMMON_BUFF_SIZE 4096
 #define SAFE_BUFF_SIZE ( COMMON_BUFF_SIZE - 1 )
-#define SLEEPTIME &( struct timespec ){ 0, 500000000 }
+#define SLEEPTIME &( struct timespec ){ 0, 500000000U }
 #define COUNTER_MAX 40
 #define RDWR_ERR ( ( errno == EWOULDBLOCK ) || \
 	         ( errno == EAGAIN ) || \
