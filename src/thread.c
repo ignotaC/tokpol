@@ -119,6 +119,8 @@ void* client( void* td )  {
   
     if( cli_stat == CLI_MSG )  {
  
+      puts ( " start of cli stat msg" );
+
       for( int i = 0;	lock_mutex( 1, envp ) != 0;
           i++ )  {
 
@@ -126,8 +128,10 @@ void* client( void* td )  {
 
       }
 
+      puts ( "mutex locked" );
       if( thread_pos != mb_cur )  {
 
+	puts( "thread pos check up" );
         do {
 
           thread_pos = thread_pos->next;
@@ -149,6 +153,7 @@ void* client( void* td )  {
 
 	  }
 
+	  puts( "updating" );
 
 	}  while( thread_pos != mb_cur );
 
@@ -156,14 +161,18 @@ void* client( void* td )  {
 
       unlock_mutex( envp );
 
+      puts( "unlock mutex" );
+
       if( ping_time > PING_MAX )  {
 
+	puts( "ping over the top - locking" );
         close( sockfd );
 	thread_fail( "Client timed out" );
 
       }
       if( ping_time > PING_CLOCK )  {
         
+	puts( "ping demand" );
         if( write_proto( sockfd, PRT_PING ) == -1 )  {
 
           close( sockfd );
@@ -183,6 +192,8 @@ void* client( void* td )  {
 
       }
 
+      puts( "sleeping and incrementing ping" );
+
       if( read( sockfd, &msgstat_prt,
           sizeof msgstat_prt ) == -1 )  {
 
@@ -191,16 +202,22 @@ void* client( void* td )  {
 	thread_fail( "Failed on probing socket" );
 
       }
+
+      puts( "Message protocol" );
       
       // no matter what is happening - client is alive
       ping_time = 0;
       if( msgstat_prt == PRT_PING )  {
 
+	puts( "ping" );
         continue;
 
       }
 
       if( msgstat_prt == PRT_MSG )  {
+
+
+      puts ( "Msg proto" );
 
         if( read_msg( sockfd, buff,
             buff_size, &data_size ) == -1 )  {
@@ -230,10 +247,13 @@ void* client( void* td )  {
 
 	unlock_mutex( envp );
 
+	puts( "finished" );
+
       }
 
       if( msgstat_prt == PRT_BYE )  {
 
+	puts( "bye" );
         shutdown( sockfd, SHUT_RDWR );
 	sleep( 1 );
 	close( sockfd );
@@ -241,6 +261,7 @@ void* client( void* td )  {
 
       }
 
+      puts( "endofloop" );
       continue;
 
     }

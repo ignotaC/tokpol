@@ -143,7 +143,6 @@ proc mainloop {  } {
         .textbox see end
         .textbox configure -state disabled
         update
-        after 25
         continue
 
       }

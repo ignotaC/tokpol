@@ -1,4 +1,5 @@
-CC = cc -Wall -Wextra -pedantic -O2 -std=c99
+CC = cc -O2 -std=c99
+CFLAGS = -Wall -Wextra -Wpedantic -D_POSIX_C_SOURCE=200809L
 THRD = -pthread
 SRC = src
 BIN = .
@@ -18,7 +19,7 @@ SERVOBJ = server.o\
 	  serv_func.o\
 	  use_file.o
 server:
-	${CDSRC} ${CC} -c ${SERVSRC}
+	${CDSRC} ${CC} ${CFLAGS} -c ${SERVSRC}
 	${CDSRC} ${CC} ${THRD} -o ../${BIN}/${SER}\
 		${SERVOBJ}
 
