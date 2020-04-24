@@ -115,25 +115,19 @@ proc mainloop {  } {
  
   while { $::log_state }  {
 
-
     set proto_byte [ recv_byte err_conn ]
     if { $proto_byte == "" }  { break }
-    puts  "we got some"
     if { $proto_byte == $proto::ping }  {
 
-      puts "ping"
       send $proto::ping err_conn
       continue
       
     } elseif { $proto_byte == $proto::bye }  {
 
-      puts "bye from server"
       err_conn "Server closed connection"
       break;
 
     } elseif { $proto_byte == $proto::msg }  {
-
-      puts "crap in"
 
       set message [ recv_msg err_conn ]
       if { $message != "" }  {
@@ -149,7 +143,6 @@ proc mainloop {  } {
 
     }  else {
 
-      puts "what happens"
       err_conn "Server sending garbage";
       break;
 
