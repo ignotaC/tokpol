@@ -20,8 +20,7 @@ OF THIS SOFTWARE.
 
 */
 
-
-
+#include "debug.h"
 #include "thread.h"
 
 #include "serv_func.h"
@@ -120,19 +119,19 @@ void* client( void* td )  {
   
     if( cli_stat == CLI_MSG )  {
  
-      puts ( " start of cli stat msg" );
+      DPUTS(  "Start of cli stat msg" );
 
-      for( int i = 0;	lock_mutex( 1, envp ) != 0;
+      for( int i = 0; lock_mutex( 1, envp ) != 0;
           i++ )  {
 
         if( i > 10 )  restart( envp );
 
       }
-
-      puts ( "mutex locked" );
+      DPUTS( "mutex locked" );
+      
       if( thread_pos != mb_cur )  {
 
-	puts( "thread pos check up" );
+	DPUTS( "thread pos check up" );
         do {
 
           thread_pos = thread_pos->next;
@@ -154,26 +153,25 @@ void* client( void* td )  {
 
 	  }
 
-	  puts( "updating" );
+	  DPUTS( "updating" );
 
 	}  while( thread_pos != mb_cur );
 
       }
 
       unlock_mutex( envp );
-
-      puts( "unlock mutex" );
+      DPUTS( "mutex unlocked" );
 
       if( ping_time > PING_MAX )  {
 
-	puts( "ping over the top - locking" );
+	DPUTS( "ping time too long - terminating" );
         close( sockfd );
 	thread_fail( "Client timed out" );
 
       }
       if( ping_time > PING_CLOCK )  {
         
-	puts( "ping demand" );
+	DPUTS( "ping demand" );
         if( write_proto( sockfd, PRT_PING ) == -1 )  {
 
           close( sockfd );
@@ -193,7 +191,7 @@ void* client( void* td )  {
 
       }
 
-      puts( "sleeping and incrementing ping" );
+      DPUTS( "sleeping and incrementing ping" );
 
       if( read( sockfd, &msgstat_prt,
           sizeof msgstat_prt ) == -1 )  {
@@ -204,13 +202,13 @@ void* client( void* td )  {
 
       }
 
-      puts( "Message protocol" );
+      DPUTS( "Message protocol" );
       
       // no matter what is happening - client is alive
       ping_time = 0;
       if( msgstat_prt == PRT_PING )  {
 
-	puts( "ping" );
+	DPUTS( "ping" );
         continue;
 
       }
@@ -218,8 +216,7 @@ void* client( void* td )  {
       if( msgstat_prt == PRT_MSG )  {
 
 
-      puts ( "Msg proto" );
-
+        DPUTS( "Msg proto" );
         if( read_msg( sockfd, buff,
             buff_size, &data_size ) == -1 )  {
 
@@ -248,13 +245,13 @@ void* client( void* td )  {
 
 	unlock_mutex( envp );
 
-	puts( "finished" );
+	DPUTS( "finished" );
 
       }
 
       if( msgstat_prt == PRT_BYE )  {
 
-	puts( "bye" );
+	DPUTS( "bye" );
         shutdown( sockfd, SHUT_RDWR );
 	sleep( 1 );
 	close( sockfd );
@@ -262,7 +259,7 @@ void* client( void* td )  {
 
       }
 
-      puts( "endofloop" );
+      DPUTS( "endofloop" );
       continue;
 
     }
@@ -403,7 +400,7 @@ void* client( void* td )  {
 
        }
       case CLI_BYE:
-       puts( "Shuting down" );
+       DPUTS( "Shuting down" );
        shutdown( sockfd,  SHUT_RDWR );
        goto thread_end;
       default:

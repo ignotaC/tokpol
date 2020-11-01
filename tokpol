@@ -352,14 +352,9 @@ proc connect_serv { }  {
     bind .userbox <Return> { 
  
       set user_message [ .userbox get 1.0 end ]
-      puts $user_message
       if { ! [ send_prtmsg $proto::msg $user_message \
         err_conn ] }  {
 
-
-        puts "in"    
-        .userbox delete 1.0 end
-        update
         .userbox delete 1.0 end
         update
 

@@ -20,33 +20,17 @@ OF THIS SOFTWARE.
 
 */
 
+#ifndef DEBUG_H
+#define DEBUG_H
 
+  #ifdef DPROG
+   
+    #define DPUTS(WORD) puts( WORD )
 
-#ifndef THREAD_H
-#define THREAD_H
+  #else
 
-#include <pthread.h>
+    #define DPUTS(WORD)
 
-extern pthread_mutex_t main_mutex;
-// mutex start
-extern const char *program_path;
-extern struct msg_buff *mb_cur;
-extern struct server_data sd;
-// Mutex end
-
-
-struct thread_data  {
-
-  int sockfd;
-  int hash;
-  char **envp;
-
-};
-
-
-void thread_fail( const char *const failstr );
-int lock_mutex( const int timewait_sec, char **envp );
-void unlock_mutex( char **envp );
-void* client( void* td );
+  #endif
 
 #endif

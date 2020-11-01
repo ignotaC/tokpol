@@ -28,6 +28,7 @@ OF THIS SOFTWARE.
 #include <unistd.h>
 #include <stddef.h>
 
+
 void fail( const char *const estr );
 
 int set_nonblock( const int fd );

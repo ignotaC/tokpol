@@ -20,6 +20,7 @@ OF THIS SOFTWARE.
 
 */
 
+#include "debug.h"
 #include "serv_func.h"
 #include "serv_globals.h"
 #include "thread.h"
@@ -99,16 +100,19 @@ int main( int argc, char **argv, char **envp  )  {
     fail( "Could not ignore sigpipe." );
   puts( "Signal handlers set" );
 
-  printf( "%d\n", sd.port );
+  printf( "Setting up on %d port\n", sd.port );
 
   int listenfd = mklistenfd( sd.port );
   if( listenfd < 0 )  fail( "Creating listen socket" );
   puts( "Listen socket created and ready to accept connections." );
 
- 
+  #ifndef DPROG
+
   puts( "Turning to daemon." ); 
-  // if( turn_daemon() < 0 )  fail( "Could not turn to daemon" );
-  // turned off for debug for now
+   if( turn_daemon() < 0 )
+     fail( "Could not turn to daemon" );
+
+  #endif // DPROG
 
   struct thread_data *td;
   struct sockaddr_in cliaddr;
