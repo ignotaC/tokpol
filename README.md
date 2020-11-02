@@ -36,3 +36,23 @@ Run make in makefile directory.
 make clear to reamove objects.
 
 No make install. You manage binaries/scripts on your own.
+
+Server turns to deamon unless you set up DEBUG mode.
+You would need to include in compile makefile flags -DDEBUG
+We start server like this: ./server server.conf
+
+example of server.conf variables:
+
+// set up your server port on this number
+PORT
+10777
+
+// save dialogs to history file
+HISTORY
+server.hist
+
+// add a user
+USER
+name
+pass
+
