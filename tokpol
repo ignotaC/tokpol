@@ -339,22 +339,15 @@ proc connect_serv { }  {
     after 25
     text .textbox -width 75 -height 15 \
         -wrap word -state disabled \
-        -background "grey15" -foreground "white" 
+        -background "grey15" -foreground "white"
     pack .textbox -side top -fill both -expand 1
     update
 
-
     after 25
     text .userbox -width 75 -height 3 \
-        -background "grey5" -foreground "white" \
-	-yscrollcommand { .textbox_bar set }
-    pack .userbox -side top -fill both 
+        -background "grey15" -foreground "white"
+    pack .userbox -side top -fill both
 
-    pack .textbox_bar .userbox -side right
-    scrollbar .textbox_bar -command { .userbox yview }
-
-
-    
     # action on enter!
     bind .userbox <Return> { 
  
