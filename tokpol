@@ -29,9 +29,34 @@
 #  STARTUP WINDOW
 #
 ######################
+ 
+package require snack
 
 wm minsize . 600 400
 wm title . "TokPol"
+
+set datapath "."
+
+if { $tcl_platform(platform) != "windows" }  { 
+
+  set datapath $env(HOME)
+  set datapath [ append datapath "/.tokpol" ]
+
+}
+
+if { ! [ file isdirectory $datapath ] }  {
+
+  puts "Program data directory .tokpol does not exist"
+  exit
+
+}
+
+set sound_message_in ""
+append sound_message_in $datapath "/sound/msg.wav"
+
+snack::sound snd
+snd read $sound_message_in
+
 
 namespace eval proto {
 
@@ -44,7 +69,8 @@ namespace eval proto {
 
 }
 
-set def_initf_name "tokpol.init"
+set def_initf_name ""
+append def_initf_name $datapath "/tokpol.init" 
 variable  cli_sock
 variable serv_str
 
@@ -110,6 +136,9 @@ label .connectlab -foreground red \
       -font bold
 pack .connectlab -side top
 
+variable not_new
+variable afterID 
+set ::not_new 0
 
 proc mainloop {  } {
  
@@ -129,6 +158,7 @@ proc mainloop {  } {
 
     } elseif { $proto_byte == $proto::msg }  {
 
+      
       set message [ recv_msg err_conn ]
       if { $message != "" }  {
 
@@ -137,9 +167,20 @@ proc mainloop {  } {
         .textbox see end
         .textbox configure -state disabled
         update
+ 
+        if { $::not_new == 1 } {
+
+          snd play
+          after cancel ::afterID
+          set ::not_new 0
+          set ::afterID [ after 5000  set ::not_new 1 ]
+
+        }
+
         continue
 
       }
+
 
     }  else {
 
@@ -154,6 +195,7 @@ proc mainloop {  } {
 
   after 1000 [ list after idle [ namespace code \
   [ info level 0 ] ] ]
+
 
 }
 
@@ -286,6 +328,7 @@ proc connect_serv { }  {
   set serv_ans [ recv 1 err_conn ]
   if { $serv_ans == $proto::ok }  {
 
+    set ::afterID [ after 10000 set ::not_new 1 ]
     .connectbut configure -text \
       "Loged as $::login_str"
 
@@ -350,7 +393,11 @@ proc connect_serv { }  {
 
     # action on enter!
     bind .userbox <Return> { 
- 
+     
+      after cancel ::afterID
+      set ::not_new 0
+      set ::afterID [ after 5000 set ::not_new 1 ]
+
       set user_message [ .userbox get 1.0 end ]
       set user_message [ string trimleft $user_message \n ]
       set user_message [ string trimright $user_message \n ]
