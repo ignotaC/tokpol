@@ -352,6 +352,9 @@ proc connect_serv { }  {
     bind .userbox <Return> { 
  
       set user_message [ .userbox get 1.0 end ]
+      set user_message [ string trimleft $user_message \n ]
+      set user_message [ string trimright $user_message \n ]
+      set user_message [ append user_message \n ]
       if { ! [ send_prtmsg $proto::msg $user_message \
         err_conn ] }  {
 
