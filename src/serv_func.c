@@ -114,7 +114,12 @@ int load_saved_msg( void )  {
   while( fgets( mb_cur->msg, MSG_SIZE - 1, chatfile ) != NULL )
     mb_cur = mb_cur->next;
 
-  if( ferror( chatfile ) )  return -1;
+  if( ferror( chatfile ) )  {
+
+    fclose( chatfile );
+    return -1;
+
+  }
   fclose( chatfile );
   return 0;
 
