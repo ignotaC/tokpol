@@ -245,17 +245,24 @@ int mklistenfd( int port )  {
   int listenfd = socket( AF_INET, SOCK_STREAM, 0 );
   if( listenfd < 0 )  return -1;
 
+  if( set_cloexec( listenfd ) == -1 )
+    goto error_return;
+	 
   int enable = 1;
   if( setsockopt( listenfd, SOL_SOCKET, SO_REUSEADDR,
       &enable, ( socklen_t )sizeof( enable ) ) < 0 )
-    return -1;
+    goto error_return;
 
   if( bind( listenfd, ( struct sockaddr* ) &sin, sizeof( sin ) ) < 0 )
-    return -1;
+    goto error_return;
   
-  if( listen( listenfd, 10 ) < 0 ) return -1;
+  if( listen( listenfd, 10 ) < 0 ) goto error_return;
 
   return listenfd;
+
+ error_return:
+  close( listenfd );
+  return -1;
 
 }
 

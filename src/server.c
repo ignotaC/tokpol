@@ -103,7 +103,7 @@ int main( int argc, char **argv, char **envp  )  {
   printf( "Setting up on %d port\n", sd.port );
 
   int listenfd = mklistenfd( sd.port );
-  if( listenfd < 0 )  fail( "Creating listen socket" );
+  if( listenfd < 0 )  fail( "Failed on creating listen socket" );
   puts( "Listen socket created and ready to accept connections." );
 
   #ifndef DPROG
