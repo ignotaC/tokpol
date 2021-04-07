@@ -52,6 +52,7 @@ OF THIS SOFTWARE.
 /////////////////////
 
 const char *program_path = NULL;
+const char *config_path = NULL;
 
 /// MUTEX
 pthread_mutex_t main_mutex;
@@ -66,10 +67,18 @@ char *saved_msg = NULL;
 int main( int argc, char **argv, char **envp  )  {
 
   char buff[ BUFF_SIZE ];
-
   if( argc != 2 )
     fail( "Missing server config file." );
-  char **server_conf = file_to_mem( argv[1], buff, BUFF_SIZE );
+ 
+  program_path = realpath( argv[0], NULL );
+  if( program_path == NULL )
+    fail( "Could not resolve server binary path" );
+
+  config_path = realpath( argv[1], NULL );
+  if( config_path == NULL )
+    fail( "Could not resolve config path" );
+
+ char **server_conf = file_to_mem( argv[1], buff, BUFF_SIZE );
   if( server_conf == NULL )
     fail( "Couold not load server_conf file." );
   puts( "Configuration file loaded." );

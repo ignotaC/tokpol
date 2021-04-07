@@ -43,6 +43,7 @@ extern struct msg_buff mb[ MB_SIZE ];
 extern struct msg_buff *mb_cur;
 
 extern const char *program_path;
+extern const char *config_path;
 extern char *saved_msg;
 
 int set_cloexec( const int fd );

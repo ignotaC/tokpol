@@ -70,8 +70,7 @@ int set_cloexec( const int fd )  {
 
 void restart( char **envp )  {
 
-  char *name = "new program";
-  char *envp_pass[] = { name, NULL };
+  char *argv_pass[] = { config_path, NULL };
 
   perror( "Restarting" );
   errno = 0;

@@ -29,7 +29,6 @@ OF THIS SOFTWARE.
 
 extern pthread_mutex_t main_mutex;
 // mutex start
-extern const char *program_path;
 extern struct msg_buff *mb_cur;
 extern struct server_data sd;
 // Mutex end
