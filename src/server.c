@@ -67,6 +67,7 @@ char *saved_msg = NULL;
 int main( int argc, char **argv, char **envp  )  {
 
   char buff[ BUFF_SIZE ];
+  printf( "%d\n", argc );
   if( argc != 2 )
     fail( "Missing server config file." );
  
@@ -77,6 +78,9 @@ int main( int argc, char **argv, char **envp  )  {
   config_path = realpath( argv[1], NULL );
   if( config_path == NULL )
     fail( "Could not resolve config path" );
+
+  puts( program_path );
+  puts( config_path );
 
  char **server_conf = file_to_mem( argv[1], buff, BUFF_SIZE );
   if( server_conf == NULL )
@@ -170,7 +174,6 @@ int main( int argc, char **argv, char **envp  )  {
 
     estat = pthread_create( &pt, NULL, client, td );
     if( estat )  restart( envp );
-
     
   }
   

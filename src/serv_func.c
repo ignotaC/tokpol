@@ -70,11 +70,12 @@ int set_cloexec( const int fd )  {
 
 void restart( char **envp )  {
 
-  char *argv_pass[] = { config_path, NULL };
+  char * argv_pass[] = { ( char* )program_path,  ( char* )config_path, NULL };
 
   perror( "Restarting" );
   errno = 0;
-  execve( program_path, envp_pass, envp );
+  execve( program_path, argv_pass, envp );
+  perror( "Error on execve" );
   exit( EXIT_FAILURE );
   
 }
