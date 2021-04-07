@@ -138,8 +138,8 @@ void* client( void* td )  {
           if( write_proto( sockfd, PRT_MSG ) == -1 ) {
 
 	    close( sockfd );
-	    thread_fail( "Fail on writing to socket" );
             unlock_mutex( envp );
+	    thread_fail( "Fail on writing to socket" );
 
 	  }
 	  size_t msg_len = strnlen( thread_pos->msg,
@@ -148,8 +148,8 @@ void* client( void* td )  {
 	      MSG_SIZE, msg_len ) == -1 )  {
 
 	    close( sockfd );
-	    thread_fail( "Fail on writing to socket" );
             unlock_mutex( envp );
+	    thread_fail( "Fail on writing to socket" );
 
 	  }
 

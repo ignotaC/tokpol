@@ -160,7 +160,8 @@ int main( int argc, char **argv, char **envp  )  {
     td->envp = envp;
 
     estat = pthread_create( &pt, NULL, client, td );
-    if( estat == EINVAL )  restart( envp );
+    if( estat )  restart( envp );
+
     
   }
   
